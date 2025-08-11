@@ -14,8 +14,8 @@ $pdo = $db->getConnection();
 $user_id = $_SESSION['user_id'];
 
 // Kategorien für Dropdown laden (nur Ausgaben-Kategorien)
-$stmt = $pdo->prepare("SELECT * FROM categories WHERE user_id = ? AND type = 'expense' ORDER BY name");
-$stmt->execute([$user_id]);
+$stmt = $pdo->prepare("SELECT * FROM categories WHERE type = 'expense' ORDER BY name");
+$stmt->execute([]);
 $categories = $stmt->fetchAll();
 
 // Form-Verarbeitung
@@ -50,8 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prüfe ob Kategorie dem Benutzer gehört und vom Typ 'expense' ist
     if (!empty($category_id)) {
-        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND user_id = ? AND type = 'expense'");
-        $stmt->execute([$category_id, $user_id]);
+        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND type = 'expense'");
+        $stmt->execute([$category_id]);
         if (!$stmt->fetch()) {
             $errors[] = 'Ungültige Kategorie ausgewählt.';
         }

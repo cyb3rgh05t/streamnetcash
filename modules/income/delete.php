@@ -40,7 +40,7 @@ try {
     }
 
     // Einnahme löschen
-    $stmt = $pdo->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?");
+    $stmt = $pdo->prepare("DELETE FROM transactions WHERE id = ?");
     $stmt->execute([$income_id, $user_id]);
 
     if ($stmt->rowCount() > 0) {

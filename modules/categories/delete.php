@@ -50,7 +50,7 @@ try {
     }
 
     // Kategorie löschen
-    $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ? AND user_id = ?");
+    $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
     $stmt->execute([$category_id, $user_id]);
 
     if ($stmt->rowCount() > 0) {

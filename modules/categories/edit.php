@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("
                 UPDATE categories 
                 SET name = ?, icon = ?, color = ?
-                WHERE id = ? AND user_id = ?
+                WHERE id = ?
             ");
 
             $stmt->execute([$name, $icon, $color, $category_id, $user_id]);

@@ -304,13 +304,14 @@ class Database
     {
         $pdo = $this->getConnection();
 
+        // Immer den ersten User updaten
         $stmt = $pdo->prepare('
-            UPDATE users 
-            SET starting_balance = ? 
-            WHERE id = ?
-        ');
+        UPDATE users 
+        SET starting_balance = ? 
+        WHERE id = (SELECT MIN(id) FROM users)
+    ');
 
-        return $stmt->execute([$starting_balance, $user_id]);
+        return $stmt->execute([$starting_balance]);
     }
 
     /**
@@ -323,8 +324,9 @@ class Database
     {
         $pdo = $this->getConnection();
 
-        $stmt = $pdo->prepare('SELECT starting_balance FROM users WHERE id = ?');
-        $stmt->execute([$user_id]);
+        // Immer das Startkapital vom ersten User verwenden
+        $stmt = $pdo->prepare('SELECT starting_balance FROM users ORDER BY id ASC LIMIT 1');
+        $stmt->execute([]);
         $result = $stmt->fetchColumn();
 
         return $result !== false ? (float)$result : 0.00;

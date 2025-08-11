@@ -14,8 +14,8 @@ $pdo = $db->getConnection();
 $user_id = $_SESSION['user_id'];
 
 // Kategorien für Dropdown laden
-$stmt = $pdo->prepare("SELECT * FROM categories WHERE user_id = ? ORDER BY type, name");
-$stmt->execute([$user_id]);
+$stmt = $pdo->prepare("SELECT * FROM categories ORDER BY type, name");
+$stmt->execute([]);
 $categories = $stmt->fetchAll();
 
 // Nach Typ trennen
@@ -70,8 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prüfe ob Kategorie dem Benutzer gehört
     if (!empty($category_id)) {
-        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND user_id = ?");
-        $stmt->execute([$category_id, $user_id]);
+        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ?");
+        $stmt->execute([$category_id]);
         if (!$stmt->fetch()) {
             $errors[] = 'Ungültige Kategorie ausgewählt.';
         }

@@ -38,8 +38,8 @@ if (!$income) {
 }
 
 // Kategorien für Dropdown laden (nur Einnahmen-Kategorien)
-$stmt = $pdo->prepare("SELECT * FROM categories WHERE user_id = ? AND type = 'income' ORDER BY name");
-$stmt->execute([$user_id]);
+$stmt = $pdo->prepare("SELECT * FROM categories WHERE type = 'income' ORDER BY name");
+$stmt->execute([]);
 $categories = $stmt->fetchAll();
 
 // Form-Verarbeitung
@@ -74,8 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prüfe ob Kategorie dem Benutzer gehört und vom Typ 'income' ist
     if (!empty($category_id)) {
-        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND user_id = ? AND type = 'income'");
-        $stmt->execute([$category_id, $user_id]);
+        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND type = 'income'");
+        $stmt->execute([$category_id]);
         if (!$stmt->fetch()) {
             $errors[] = 'Ungültige Kategorie ausgewählt.';
         }
@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("
                 UPDATE transactions 
                 SET category_id = ?, amount = ?, note = ?, date = ?
-                WHERE id = ? AND user_id = ?
+                WHERE id = ?
             ");
 
             $stmt->execute([

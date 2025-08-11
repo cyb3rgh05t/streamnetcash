@@ -53,7 +53,7 @@ if (isset($_SESSION['success'])) {
 
         .login-title {
             color: var(--clr-primary-a20);
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 700;
             margin-bottom: 8px;
         }
@@ -137,8 +137,11 @@ if (isset($_SESSION['success'])) {
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <h1 class="login-title">StreamNet Finance</h1>
-
+                <div class="login-logo">
+                    <img src="assets/images/logo.png" alt="StreamNet Finance Logo" class="login-logo-image">
+                    <h1 class="login-title">StreamNet Finance</h1>
+                </div>
+                <p class="login-subtitle">Dein persönlicher Finanztracker</p>
             </div>
 
             <?php if ($error_message): ?>

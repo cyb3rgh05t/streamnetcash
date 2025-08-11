@@ -130,10 +130,13 @@ $form_data = [
 
 <body>
     <div class="app-layout">
-        <aside class="sidebar">
-            <div style="padding: 20px; border-bottom: 1px solid var(--clr-surface-a20); margin-bottom: 20px;">
-                <h2 style="color: var(--clr-primary-a20);">StreamNet Finance</h2>
-                <p style="color: var(--clr-surface-a50); font-size: 14px;">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
+        <<aside class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-logo">
+                    <img src="../../assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
+                    <h2 class="sidebar-logo-text">StreamNet Finance</h2>
+                </a>
+                <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 
             <nav>
@@ -149,213 +152,213 @@ $form_data = [
                     <li><a href="../../logout.php">🚪 Logout</a></li>
                 </ul>
             </nav>
-        </aside>
+            </aside>
 
-        <main class="main-content">
-            <div class="page-header">
-                <div>
-                    <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">🔄 Neue wiederkehrende Transaktion</h1>
-                    <p style="color: var(--clr-surface-a50);">Automatisiere regelmäßige Einnahmen oder Ausgaben</p>
-                </div>
-                <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
-            </div>
-
-            <div class="form-container">
-                <div class="form-card">
-                    <div class="form-header">
-                        <h2>🔄 Wiederkehrende Transaktion erstellen</h2>
-                        <p>Richte automatische Buchungen für regelmäßige Einnahmen oder Ausgaben ein</p>
+            <main class="main-content">
+                <div class="page-header">
+                    <div>
+                        <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">🔄 Neue wiederkehrende Transaktion</h1>
+                        <p style="color: var(--clr-surface-a50);">Automatisiere regelmäßige Einnahmen oder Ausgaben</p>
                     </div>
+                    <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
+                </div>
 
-                    <?php if (!empty($errors)): ?>
-                        <div class="alert alert-error">
-                            <strong>Fehler:</strong><br>
-                            <?= implode('<br>', array_map('htmlspecialchars', $errors)) ?>
+                <div class="form-container">
+                    <div class="form-card">
+                        <div class="form-header">
+                            <h2>🔄 Wiederkehrende Transaktion erstellen</h2>
+                            <p>Richte automatische Buchungen für regelmäßige Einnahmen oder Ausgaben ein</p>
                         </div>
-                    <?php endif; ?>
 
-                    <?php if (empty($categories)): ?>
-                        <div class="alert alert-error">
-                            <strong>Keine Kategorien vorhanden!</strong><br>
-                            Du musst zuerst <a href="../categories/add.php" style="color: var(--clr-primary-a20);">Kategorien erstellen</a>,
-                            bevor du wiederkehrende Transaktionen hinzufügen kannst.
-                        </div>
-                    <?php else: ?>
-                        <form method="POST" id="recurringForm">
-                            <div class="form-group">
-                                <label class="form-label" for="category_id">Kategorie *</label>
-                                <select id="category_id" name="category_id" class="form-select" required onchange="updatePreview()">
-                                    <option value="">Kategorie wählen...</option>
-                                    <?php if (!empty($income_categories)): ?>
-                                        <optgroup label="💰 Einnahmen">
-                                            <?php foreach ($income_categories as $category): ?>
-                                                <option value="<?= $category['id'] ?>"
-                                                    data-icon="<?= htmlspecialchars($category['icon']) ?>"
-                                                    data-color="<?= htmlspecialchars($category['color']) ?>"
-                                                    data-type="income"
-                                                    <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($category['name']) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </optgroup>
-                                    <?php endif; ?>
-                                    <?php if (!empty($expense_categories)): ?>
-                                        <optgroup label="💸 Ausgaben">
-                                            <?php foreach ($expense_categories as $category): ?>
-                                                <option value="<?= $category['id'] ?>"
-                                                    data-icon="<?= htmlspecialchars($category['icon']) ?>"
-                                                    data-color="<?= htmlspecialchars($category['color']) ?>"
-                                                    data-type="expense"
-                                                    <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($category['name']) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </optgroup>
-                                    <?php endif; ?>
-                                </select>
-                                <div id="categoryPreview" class="category-preview">
-                                    <span class="category-icon" id="previewIcon">📁</span>
-                                    <span class="category-name" id="previewName">Kategorie</span>
-                                </div>
+                        <?php if (!empty($errors)): ?>
+                            <div class="alert alert-error">
+                                <strong>Fehler:</strong><br>
+                                <?= implode('<br>', array_map('htmlspecialchars', $errors)) ?>
                             </div>
+                        <?php endif; ?>
 
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label class="form-label" for="amount">Betrag *</label>
-                                    <div class="amount-input-wrapper">
-                                        <span class="currency-symbol">€</span>
-                                        <input type="number" id="amount" name="amount"
-                                            class="form-input amount-input"
-                                            step="0.01" min="0.01"
-                                            value="<?= htmlspecialchars($form_data['amount']) ?>"
-                                            placeholder="0,00" required oninput="updatePreview()">
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label" for="note">Beschreibung</label>
-                                    <input type="text" id="note" name="note"
-                                        class="form-input"
-                                        value="<?= htmlspecialchars($form_data['note']) ?>"
-                                        placeholder="z.B. Miete, Gehalt, Spotify..."
-                                        oninput="updatePreview()">
-                                </div>
+                        <?php if (empty($categories)): ?>
+                            <div class="alert alert-error">
+                                <strong>Keine Kategorien vorhanden!</strong><br>
+                                Du musst zuerst <a href="../categories/add.php" style="color: var(--clr-primary-a20);">Kategorien erstellen</a>,
+                                bevor du wiederkehrende Transaktionen hinzufügen kannst.
                             </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Häufigkeit *</label>
-                                <div class="frequency-selector">
-                                    <div class="frequency-option">
-                                        <input type="radio" id="freq_daily" name="frequency" value="daily"
-                                            class="frequency-radio" <?= $form_data['frequency'] === 'daily' ? 'checked' : '' ?>
-                                            onchange="updatePreview()">
-                                        <label for="freq_daily" class="frequency-label">
-                                            <div class="frequency-icon">📅</div>
-                                            <div class="frequency-name">Täglich</div>
-                                            <div class="frequency-desc">Jeden Tag</div>
-                                        </label>
-                                    </div>
-                                    <div class="frequency-option">
-                                        <input type="radio" id="freq_weekly" name="frequency" value="weekly"
-                                            class="frequency-radio" <?= $form_data['frequency'] === 'weekly' ? 'checked' : '' ?>
-                                            onchange="updatePreview()">
-                                        <label for="freq_weekly" class="frequency-label">
-                                            <div class="frequency-icon">📆</div>
-                                            <div class="frequency-name">Wöchentlich</div>
-                                            <div class="frequency-desc">Jede Woche</div>
-                                        </label>
-                                    </div>
-                                    <div class="frequency-option">
-                                        <input type="radio" id="freq_monthly" name="frequency" value="monthly"
-                                            class="frequency-radio" <?= $form_data['frequency'] === 'monthly' ? 'checked' : '' ?>
-                                            onchange="updatePreview()">
-                                        <label for="freq_monthly" class="frequency-label">
-                                            <div class="frequency-icon">🗓️</div>
-                                            <div class="frequency-name">Monatlich</div>
-                                            <div class="frequency-desc">Jeden Monat</div>
-                                        </label>
-                                    </div>
-                                    <div class="frequency-option">
-                                        <input type="radio" id="freq_yearly" name="frequency" value="yearly"
-                                            class="frequency-radio" <?= $form_data['frequency'] === 'yearly' ? 'checked' : '' ?>
-                                            onchange="updatePreview()">
-                                        <label for="freq_yearly" class="frequency-label">
-                                            <div class="frequency-icon">📅</div>
-                                            <div class="frequency-name">Jährlich</div>
-                                            <div class="frequency-desc">Jedes Jahr</div>
-                                        </label>
+                        <?php else: ?>
+                            <form method="POST" id="recurringForm">
+                                <div class="form-group">
+                                    <label class="form-label" for="category_id">Kategorie *</label>
+                                    <select id="category_id" name="category_id" class="form-select" required onchange="updatePreview()">
+                                        <option value="">Kategorie wählen...</option>
+                                        <?php if (!empty($income_categories)): ?>
+                                            <optgroup label="💰 Einnahmen">
+                                                <?php foreach ($income_categories as $category): ?>
+                                                    <option value="<?= $category['id'] ?>"
+                                                        data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                                        data-color="<?= htmlspecialchars($category['color']) ?>"
+                                                        data-type="income"
+                                                        <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($category['name']) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </optgroup>
+                                        <?php endif; ?>
+                                        <?php if (!empty($expense_categories)): ?>
+                                            <optgroup label="💸 Ausgaben">
+                                                <?php foreach ($expense_categories as $category): ?>
+                                                    <option value="<?= $category['id'] ?>"
+                                                        data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                                        data-color="<?= htmlspecialchars($category['color']) ?>"
+                                                        data-type="expense"
+                                                        <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($category['name']) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </optgroup>
+                                        <?php endif; ?>
+                                    </select>
+                                    <div id="categoryPreview" class="category-preview">
+                                        <span class="category-icon" id="previewIcon">📁</span>
+                                        <span class="category-name" id="previewName">Kategorie</span>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div class="date-grid">
-                                <div class="form-group">
-                                    <label class="form-label" for="start_date">Startdatum *</label>
-                                    <input type="date" id="start_date" name="start_date"
-                                        class="form-input"
-                                        value="<?= htmlspecialchars($form_data['start_date']) ?>"
-                                        min="<?= date('Y-m-d') ?>" required
-                                        onchange="updatePreview()">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="amount">Betrag *</label>
+                                        <div class="amount-input-wrapper">
+                                            <span class="currency-symbol">€</span>
+                                            <input type="number" id="amount" name="amount"
+                                                class="form-input amount-input"
+                                                step="0.01" min="0.01"
+                                                value="<?= htmlspecialchars($form_data['amount']) ?>"
+                                                placeholder="0,00" required oninput="updatePreview()">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label" for="note">Beschreibung</label>
+                                        <input type="text" id="note" name="note"
+                                            class="form-input"
+                                            value="<?= htmlspecialchars($form_data['note']) ?>"
+                                            placeholder="z.B. Miete, Gehalt, Spotify..."
+                                            oninput="updatePreview()">
+                                    </div>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label" for="end_date">Enddatum (optional)</label>
-                                    <input type="date" id="end_date" name="end_date"
-                                        class="form-input"
-                                        value="<?= htmlspecialchars($form_data['end_date']) ?>"
-                                        onchange="updatePreview()">
-                                    <small style="color: var(--clr-surface-a50); font-size: 12px;">
-                                        Leer lassen für unbegrenzte Wiederholung
-                                    </small>
+                                    <label class="form-label">Häufigkeit *</label>
+                                    <div class="frequency-selector">
+                                        <div class="frequency-option">
+                                            <input type="radio" id="freq_daily" name="frequency" value="daily"
+                                                class="frequency-radio" <?= $form_data['frequency'] === 'daily' ? 'checked' : '' ?>
+                                                onchange="updatePreview()">
+                                            <label for="freq_daily" class="frequency-label">
+                                                <div class="frequency-icon">📅</div>
+                                                <div class="frequency-name">Täglich</div>
+                                                <div class="frequency-desc">Jeden Tag</div>
+                                            </label>
+                                        </div>
+                                        <div class="frequency-option">
+                                            <input type="radio" id="freq_weekly" name="frequency" value="weekly"
+                                                class="frequency-radio" <?= $form_data['frequency'] === 'weekly' ? 'checked' : '' ?>
+                                                onchange="updatePreview()">
+                                            <label for="freq_weekly" class="frequency-label">
+                                                <div class="frequency-icon">📆</div>
+                                                <div class="frequency-name">Wöchentlich</div>
+                                                <div class="frequency-desc">Jede Woche</div>
+                                            </label>
+                                        </div>
+                                        <div class="frequency-option">
+                                            <input type="radio" id="freq_monthly" name="frequency" value="monthly"
+                                                class="frequency-radio" <?= $form_data['frequency'] === 'monthly' ? 'checked' : '' ?>
+                                                onchange="updatePreview()">
+                                            <label for="freq_monthly" class="frequency-label">
+                                                <div class="frequency-icon">🗓️</div>
+                                                <div class="frequency-name">Monatlich</div>
+                                                <div class="frequency-desc">Jeden Monat</div>
+                                            </label>
+                                        </div>
+                                        <div class="frequency-option">
+                                            <input type="radio" id="freq_yearly" name="frequency" value="yearly"
+                                                class="frequency-radio" <?= $form_data['frequency'] === 'yearly' ? 'checked' : '' ?>
+                                                onchange="updatePreview()">
+                                            <label for="freq_yearly" class="frequency-label">
+                                                <div class="frequency-icon">📅</div>
+                                                <div class="frequency-name">Jährlich</div>
+                                                <div class="frequency-desc">Jedes Jahr</div>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="preview-section">
-                                <div class="preview-title">🔍 Vorschau</div>
-                                <div class="preview-item">
-                                    <span class="preview-label">Kategorie:</span>
-                                    <span class="preview-value" id="previewCategory">Keine ausgewählt</span>
-                                </div>
-                                <div class="preview-item">
-                                    <span class="preview-label">Betrag:</span>
-                                    <span class="preview-value" id="previewAmount">€0,00</span>
-                                </div>
-                                <div class="preview-item">
-                                    <span class="preview-label">Beschreibung:</span>
-                                    <span class="preview-value" id="previewNote">Wiederkehrende Transaktion</span>
-                                </div>
-                                <div class="preview-item">
-                                    <span class="preview-label">Häufigkeit:</span>
-                                    <span class="preview-value" id="previewFrequency">Monatlich</span>
-                                </div>
-                                <div class="preview-item">
-                                    <span class="preview-label">Erste Ausführung:</span>
-                                    <span class="preview-value" id="previewStartDate"><?= date('d.m.Y') ?></span>
-                                </div>
-                                <div class="preview-item">
-                                    <span class="preview-label">Läuft bis:</span>
-                                    <span class="preview-value" id="previewEndDate">Unbegrenzt</span>
-                                </div>
-                            </div>
+                                <div class="date-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="start_date">Startdatum *</label>
+                                        <input type="date" id="start_date" name="start_date"
+                                            class="form-input"
+                                            value="<?= htmlspecialchars($form_data['start_date']) ?>"
+                                            min="<?= date('Y-m-d') ?>" required
+                                            onchange="updatePreview()">
+                                    </div>
 
-                            <div class="form-actions">
-                                <a href="index.php" class="btn btn-cancel">Abbrechen</a>
-                                <button type="submit" class="btn">💾 Wiederkehrende Transaktion erstellen</button>
-                            </div>
-                        </form>
-                    <?php endif; ?>
+                                    <div class="form-group">
+                                        <label class="form-label" for="end_date">Enddatum (optional)</label>
+                                        <input type="date" id="end_date" name="end_date"
+                                            class="form-input"
+                                            value="<?= htmlspecialchars($form_data['end_date']) ?>"
+                                            onchange="updatePreview()">
+                                        <small style="color: var(--clr-surface-a50); font-size: 12px;">
+                                            Leer lassen für unbegrenzte Wiederholung
+                                        </small>
+                                    </div>
+                                </div>
 
-                    <div class="info-box">
-                        <div class="info-title">💡 Wie funktionieren wiederkehrende Transaktionen?</div>
-                        <div class="info-text">
-                            Wiederkehrende Transaktionen werden automatisch zu den angegebenen Zeitpunkten erstellt.
-                            Du kannst sie jederzeit pausieren, bearbeiten oder löschen. Die nächste Fälligkeit wird
-                            automatisch berechnet und die Transaktionen werden bei deinem nächsten Login erstellt.
+                                <div class="preview-section">
+                                    <div class="preview-title">🔍 Vorschau</div>
+                                    <div class="preview-item">
+                                        <span class="preview-label">Kategorie:</span>
+                                        <span class="preview-value" id="previewCategory">Keine ausgewählt</span>
+                                    </div>
+                                    <div class="preview-item">
+                                        <span class="preview-label">Betrag:</span>
+                                        <span class="preview-value" id="previewAmount">€0,00</span>
+                                    </div>
+                                    <div class="preview-item">
+                                        <span class="preview-label">Beschreibung:</span>
+                                        <span class="preview-value" id="previewNote">Wiederkehrende Transaktion</span>
+                                    </div>
+                                    <div class="preview-item">
+                                        <span class="preview-label">Häufigkeit:</span>
+                                        <span class="preview-value" id="previewFrequency">Monatlich</span>
+                                    </div>
+                                    <div class="preview-item">
+                                        <span class="preview-label">Erste Ausführung:</span>
+                                        <span class="preview-value" id="previewStartDate"><?= date('d.m.Y') ?></span>
+                                    </div>
+                                    <div class="preview-item">
+                                        <span class="preview-label">Läuft bis:</span>
+                                        <span class="preview-value" id="previewEndDate">Unbegrenzt</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-actions">
+                                    <a href="index.php" class="btn btn-cancel">Abbrechen</a>
+                                    <button type="submit" class="btn">💾 Wiederkehrende Transaktion erstellen</button>
+                                </div>
+                            </form>
+                        <?php endif; ?>
+
+                        <div class="info-box">
+                            <div class="info-title">💡 Wie funktionieren wiederkehrende Transaktionen?</div>
+                            <div class="info-text">
+                                Wiederkehrende Transaktionen werden automatisch zu den angegebenen Zeitpunkten erstellt.
+                                Du kannst sie jederzeit pausieren, bearbeiten oder löschen. Die nächste Fälligkeit wird
+                                automatisch berechnet und die Transaktionen werden bei deinem nächsten Login erstellt.
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
     </div>
 
     <script>

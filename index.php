@@ -25,7 +25,7 @@ if (isset($_SESSION['success'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Tracker - Login</title>
+    <title>StreamNet Club Ca$h - Login</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <style>
         .login-container {
@@ -199,7 +199,7 @@ if (isset($_SESSION['success'])) {
             </div>
 
             <div class="form-footer">
-                <p>© 2025 Finance Tracker - Deine persönliche Finanzverwaltung</p>
+                <p>© 2025 StreamNet Club Ca$h - Finanzverwaltung</p>
             </div>
         </div>
     </div>

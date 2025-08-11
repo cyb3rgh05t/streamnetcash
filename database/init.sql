@@ -1,9 +1,10 @@
--- Benutzer-Tabelle
+-- Benutzer-Tabelle (Mit Startkapital erweitert)
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    starting_balance REAL DEFAULT 0.00,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -40,3 +41,6 @@ INSERT OR IGNORE INTO categories (id, user_id, name, type, color, icon) VALUES
 (4, 1, 'Miete', 'expense', '#9333ea', '🏠'),
 (5, 1, 'Transport', 'expense', '#78716c', '🚗'),
 (6, 1, 'Freizeit', 'expense', '#ec4899', '🎬');
+
+-- Startkapital für Standard-Benutzer setzen (falls gewünscht)
+UPDATE users SET starting_balance = 1000.00 WHERE id = 1;

@@ -20,7 +20,7 @@ if (!isset($_SESSION['user_id'])) {
     <div class="app-layout">
         <aside class="sidebar">
             <div style="padding: 20px; border-bottom: 1px solid var(--clr-surface-a20); margin-bottom: 20px;">
-                <h2 style="color: var(--clr-primary-a20);">Finance Tracker</h2>
+                <h2 style="color: var(--clr-primary-a20);">💰 Finance Tracker</h2>
                 <p style="color: var(--clr-surface-a50); font-size: 14px;">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 
@@ -39,6 +39,9 @@ if (!isset($_SESSION['user_id'])) {
                             🏷️ Kategorien
                         </a></li>
                     <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
+                        <a href="settings.php" class="<?= basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : '' ?>">⚙️ Einstellungen</a>
+                    </li>
+                    <li>
                         <a href="logout.php">🚪 Logout</a>
                     </li>
                 </ul>

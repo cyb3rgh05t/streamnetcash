@@ -16,6 +16,9 @@ $user_id = $_SESSION['user_id'];
 // Dashboard-Statistiken laden
 $current_month = date('Y-m');
 
+// Startkapital laden
+$starting_balance = $db->getStartingBalance($user_id);
+
 // Gesamte Einnahmen diesen Monat (via JOIN mit categories)
 $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(t.amount), 0) as total 
@@ -36,8 +39,31 @@ $stmt = $pdo->prepare("
 $stmt->execute([$user_id, $current_month]);
 $total_expenses = $stmt->fetchColumn();
 
-// Saldo berechnen
+// Gesamte Einnahmen (alle Zeit)
+$stmt = $pdo->prepare("
+    SELECT COALESCE(SUM(t.amount), 0) as total 
+    FROM transactions t
+    JOIN categories c ON t.category_id = c.id
+    WHERE t.user_id = ? AND c.type = 'income'
+");
+$stmt->execute([$user_id]);
+$total_income_all_time = $stmt->fetchColumn();
+
+// Gesamte Ausgaben (alle Zeit)
+$stmt = $pdo->prepare("
+    SELECT COALESCE(SUM(t.amount), 0) as total 
+    FROM transactions t
+    JOIN categories c ON t.category_id = c.id
+    WHERE t.user_id = ? AND c.type = 'expense'
+");
+$stmt->execute([$user_id]);
+$total_expenses_all_time = $stmt->fetchColumn();
+
+// Saldo berechnen (nur aktueller Monat)
 $balance = $total_income - $total_expenses;
+
+// Gesamtvermögen berechnen (Startkapital + alle Einnahmen - alle Ausgaben)
+$total_wealth = $starting_balance + $total_income_all_time - $total_expenses_all_time;
 
 // Letzte 5 Transaktionen
 $stmt = $pdo->prepare("
@@ -96,6 +122,47 @@ $expense_categories = $stmt->fetchAll();
         .quick-actions {
             display: flex;
             gap: 10px;
+        }
+
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card-wealth {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            border: 2px solid var(--clr-primary-a0);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-wealth::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(230, 163, 9, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(50%, -50%);
+        }
+
+        .card-wealth .card-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .wealth-subtitle {
+            font-size: 12px;
+            color: var(--clr-surface-a40);
+            margin-top: 5px;
         }
 
         .transaction-item {
@@ -182,6 +249,33 @@ $expense_categories = $stmt->fetchAll();
             color: var(--clr-primary-a20);
         }
 
+        .wealth-breakdown {
+            background-color: var(--clr-surface-tonal-a10);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .breakdown-title {
+            color: var(--clr-primary-a20);
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-bottom: 4px;
+            color: var(--clr-surface-a50);
+        }
+
+        .breakdown-value {
+            color: var(--clr-light-a0);
+            font-weight: 500;
+        }
+
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -196,6 +290,10 @@ $expense_categories = $stmt->fetchAll();
             .quick-actions {
                 width: 100%;
                 justify-content: center;
+            }
+
+            .dashboard-cards {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -216,15 +314,16 @@ $expense_categories = $stmt->fetchAll();
                     <li><a href="modules/income/index.php">💰 Einnahmen</a></li>
                     <li><a href="modules/categories/index.php">🏷️ Kategorien</a></li>
                     <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
-                        <a href="logout.php">🚪 Logout</a>
+                        <a href="settings.php">⚙️ Einstellungen</a>
                     </li>
+                    <li><a href="logout.php">🚪 Logout</a></li>
                 </ul>
             </nav>
         </aside>
 
         <main class="main-content">
             <div class="db-info">
-                ✅ <strong>Verbesserte Database-Klasse aktiv</strong> - Neue Schema-Struktur mit optimierten JOINs
+                ✅ <strong>Verbesserte Database-Klasse aktiv</strong> - Neue Schema-Struktur mit Startkapital und Gesamtvermögen-Berechnung
             </div>
 
             <div class="dashboard-header">
@@ -240,9 +339,35 @@ $expense_categories = $stmt->fetchAll();
 
             <!-- Dashboard Cards -->
             <div class="dashboard-cards">
+                <!-- Gesamtvermögen (Neue Hauptkarte) -->
+                <div class="card card-wealth">
+                    <div class="card-header">
+                        <h3 class="card-title">Gesamtvermögen</h3>
+                        <span>🏦</span>
+                    </div>
+                    <div class="card-value">€<?= number_format($total_wealth, 2, ',', '.') ?></div>
+                    <div class="wealth-subtitle">Startkapital + Einnahmen - Ausgaben</div>
+
+                    <div class="wealth-breakdown">
+                        <div class="breakdown-title">📋 Aufschlüsselung</div>
+                        <div class="breakdown-item">
+                            <span>Startkapital:</span>
+                            <span class="breakdown-value">€<?= number_format($starting_balance, 2, ',', '.') ?></span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span>+ Gesamt Einnahmen:</span>
+                            <span class="breakdown-value">€<?= number_format($total_income_all_time, 2, ',', '.') ?></span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span>- Gesamt Ausgaben:</span>
+                            <span class="breakdown-value">€<?= number_format($total_expenses_all_time, 2, ',', '.') ?></span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card card-income">
                     <div class="card-header">
-                        <h3 class="card-title">Gesamte Einnahmen</h3>
+                        <h3 class="card-title">Einnahmen</h3>
                         <span>💰</span>
                     </div>
                     <div class="card-value">€<?= number_format($total_income, 2, ',', '.') ?></div>
@@ -251,7 +376,7 @@ $expense_categories = $stmt->fetchAll();
 
                 <div class="card card-expense">
                     <div class="card-header">
-                        <h3 class="card-title">Gesamte Ausgaben</h3>
+                        <h3 class="card-title">Ausgaben</h3>
                         <span>💸</span>
                     </div>
                     <div class="card-value">€<?= number_format($total_expenses, 2, ',', '.') ?></div>
@@ -260,13 +385,13 @@ $expense_categories = $stmt->fetchAll();
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Saldo</h3>
+                        <h3 class="card-title">Monatssaldo</h3>
                         <span>📊</span>
                     </div>
                     <div class="card-value" style="color: <?= $balance >= 0 ? '#4ade80' : '#f87171' ?>">
                         €<?= number_format($balance, 2, ',', '.') ?>
                     </div>
-                    <p style="color: var(--clr-surface-a50); font-size: 14px;">Einnahmen - Ausgaben</p>
+                    <p style="color: var(--clr-surface-a50); font-size: 14px;">Einnahmen - Ausgaben (<?= date('M Y') ?>)</p>
                 </div>
             </div>
 
@@ -334,6 +459,17 @@ $expense_categories = $stmt->fetchAll();
                     <?php endif; ?>
                 </div>
             </div>
+
+            <!-- Shortcut zu Einstellungen wenn kein Startkapital gesetzt -->
+            <?php if ($starting_balance == 0): ?>
+                <div style="background-color: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; border-radius: 8px; padding: 15px; margin-top: 20px; text-align: center;">
+                    <div style="color: #fcd34d; margin-bottom: 10px; font-weight: 600;">💡 Tipp: Startkapital festlegen</div>
+                    <div style="color: var(--clr-surface-a50); font-size: 14px; margin-bottom: 15px;">
+                        Lege dein Startkapital fest, um dein echtes Gesamtvermögen zu sehen!
+                    </div>
+                    <a href="settings.php" class="btn btn-small">⚙️ Startkapital festlegen</a>
+                </div>
+            <?php endif; ?>
         </main>
     </div>
 

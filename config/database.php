@@ -66,6 +66,7 @@ class Database
             username TEXT NOT NULL UNIQUE,
             email TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
+            starting_balance REAL DEFAULT 0.00,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
 
@@ -96,10 +97,42 @@ class Database
         $pdo->beginTransaction();
         try {
             $pdo->exec($schemaSql);
+            $this->migrateExistingUsers();
             $pdo->commit();
         } catch (Throwable $t) {
             $pdo->rollBack();
             die('Database schema initialization failed: ' . $t->getMessage());
+        }
+    }
+
+    /**
+     * Migration für bestehende Benutzer ohne starting_balance Spalte
+     */
+    private function migrateExistingUsers(): void
+    {
+        $pdo = $this->getConnection();
+
+        try {
+            // Prüfe ob starting_balance Spalte bereits existiert
+            $stmt = $pdo->prepare("PRAGMA table_info(users)");
+            $stmt->execute();
+            $columns = $stmt->fetchAll();
+
+            $hasStartingBalance = false;
+            foreach ($columns as $column) {
+                if ($column['name'] === 'starting_balance') {
+                    $hasStartingBalance = true;
+                    break;
+                }
+            }
+
+            // Füge Spalte hinzu wenn sie nicht existiert
+            if (!$hasStartingBalance) {
+                $pdo->exec("ALTER TABLE users ADD COLUMN starting_balance REAL DEFAULT 0.00");
+            }
+        } catch (PDOException $e) {
+            // Spalte existiert bereits oder anderer Fehler - das ist okay
+            error_log("Migration info: " . $e->getMessage());
         }
     }
 
@@ -169,8 +202,8 @@ class Database
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
         $stmt = $pdo->prepare('
-            INSERT INTO users (username, email, password_hash)
-            VALUES (?, ?, ?)
+            INSERT INTO users (username, email, password_hash, starting_balance)
+            VALUES (?, ?, ?, 0.00)
         ');
 
         $stmt->execute([$username, $email, $password_hash]);
@@ -194,7 +227,7 @@ class Database
         $pdo = $this->getConnection();
 
         $stmt = $pdo->prepare('
-            SELECT id, username, email, password_hash 
+            SELECT id, username, email, password_hash, starting_balance
             FROM users 
             WHERE username = ? OR email = ?
         ');
@@ -208,5 +241,42 @@ class Database
         // Remove password_hash from return data
         unset($user['password_hash']);
         return $user;
+    }
+
+    /**
+     * Update user's starting balance
+     *
+     * @param int $user_id
+     * @param float $starting_balance
+     * @return bool Success
+     */
+    public function updateStartingBalance(int $user_id, float $starting_balance): bool
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('
+            UPDATE users 
+            SET starting_balance = ? 
+            WHERE id = ?
+        ');
+
+        return $stmt->execute([$starting_balance, $user_id]);
+    }
+
+    /**
+     * Get user's starting balance
+     *
+     * @param int $user_id
+     * @return float Starting balance
+     */
+    public function getStartingBalance(int $user_id): float
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('SELECT starting_balance FROM users WHERE id = ?');
+        $stmt->execute([$user_id]);
+        $result = $stmt->fetchColumn();
+
+        return $result !== false ? (float)$result : 0.00;
     }
 }

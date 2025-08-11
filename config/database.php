@@ -197,8 +197,8 @@ class Database
         $pdo = $this->getConnection();
 
         // If the user already has categories, do nothing
-        $check = $pdo->prepare('SELECT COUNT(*) AS cnt FROM categories WHERE user_id = ?');
-        $check->execute([$user_id]);
+        $check = $pdo->prepare('SELECT COUNT(*) AS cnt FROM categories');
+        $check->execute([]);
         $row = $check->fetch();
         if ($row && (int)$row['cnt'] > 0) {
             return;
@@ -355,10 +355,7 @@ class Database
 
         $params = [$today, $today];
 
-        if ($user_id !== null) {
-            $sql .= " AND rt.user_id = ?";
-            $params[] = $user_id;
-        }
+
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);

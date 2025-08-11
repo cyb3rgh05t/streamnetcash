@@ -26,7 +26,7 @@ $stmt = $pdo->prepare("
     SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color
     FROM transactions t
     JOIN categories c ON t.category_id = c.id
-    WHERE t.id = ? AND t.user_id = ? AND c.type = 'income'
+    WHERE t.id = ? AND c.type = 'income'
 ");
 $stmt->execute([$income_id, $user_id]);
 $income = $stmt->fetch();

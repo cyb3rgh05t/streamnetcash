@@ -31,9 +31,9 @@ $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(t.amount), 0) as total 
     FROM transactions t
     JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND c.type = 'income' AND strftime('%Y-%m', t.date) = ?
+    WHERE c.type = 'income' AND strftime('%Y-%m', t.date) = ?
 ");
-$stmt->execute([$user_id, $current_month]);
+$stmt->execute([$current_month]);
 $total_income = $stmt->fetchColumn();
 
 // Gesamte Ausgaben diesen Monat (via JOIN mit categories)
@@ -51,9 +51,10 @@ $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(t.amount), 0) as total 
     FROM transactions t
     JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND c.type = 'income'
+    WHERE c.type = 'income'
 ");
-$stmt->execute([$user_id]);
+$stmt->execute([]);
+
 $total_income_all_time = $stmt->fetchColumn();
 
 // Gesamte Ausgaben (alle Zeit)
@@ -79,9 +80,9 @@ $stmt = $pdo->prepare("
         COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_recurring,
         COUNT(CASE WHEN is_active = 1 AND next_due_date <= ? THEN 1 END) as due_soon
     FROM recurring_transactions 
-    WHERE user_id = ?
+    WHERE user_id IS NOT NULL
 ");
-$stmt->execute([date('Y-m-d', strtotime('+7 days')), $user_id]);
+$stmt->execute([date('Y-m-d', strtotime('+7 days'))]);
 $recurring_stats = $stmt->fetch();
 
 // Fällige wiederkehrende Transaktionen für Warning
@@ -93,7 +94,7 @@ $stmt = $pdo->prepare("
     ORDER BY rt.next_due_date ASC
     LIMIT 3
 ");
-$stmt->execute([$user_id, date('Y-m-d', strtotime('+3 days'))]);
+$stmt->execute([date('Y-m-d', strtotime('+3 days'))]);
 $due_recurring = $stmt->fetchAll();
 
 // Letzte 5 Transaktionen
@@ -101,11 +102,11 @@ $stmt = $pdo->prepare("
     SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
     FROM transactions t
     JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ?
+    WHERE t.user_id IS NOT NULL
     ORDER BY t.date DESC, t.created_at DESC
     LIMIT 5
 ");
-$stmt->execute([$user_id]);
+$stmt->execute([]);
 $recent_transactions = $stmt->fetchAll();
 
 // Ausgaben nach Kategorien für Chart
@@ -113,12 +114,12 @@ $stmt = $pdo->prepare("
     SELECT c.name, c.color, c.icon, COALESCE(SUM(t.amount), 0) as total
     FROM categories c
     LEFT JOIN transactions t ON c.id = t.category_id AND strftime('%Y-%m', t.date) = ?
-    WHERE c.user_id = ? AND c.type = 'expense'
+    WHERE c.type = 'expense'
     GROUP BY c.id, c.name, c.color, c.icon
     HAVING total > 0
     ORDER BY total DESC
 ");
-$stmt->execute([$current_month, $user_id]);
+$stmt->execute([$current_month]);
 $expense_categories = $stmt->fetchAll();
 
 // Success message anzeigen

@@ -19,8 +19,8 @@ $selected_category = $_GET['category'] ?? '';
 $search = $_GET['search'] ?? '';
 
 // Kategorien für Filter laden (nur Ausgaben-Kategorien)
-$stmt = $pdo->prepare("SELECT * FROM categories WHERE user_id = ? AND type = 'expense' ORDER BY name");
-$stmt->execute([$user_id]);
+$stmt = $pdo->prepare("SELECT * FROM categories WHERE type = 'expense' ORDER BY name");
+$stmt->execute([]);
 $categories = $stmt->fetchAll();
 
 // Ausgaben laden mit Filtern (UPDATED für neue Schema-Struktur)
@@ -28,10 +28,10 @@ $sql = "
     SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color
     FROM transactions t
     JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND c.type = 'expense'
+    WHERE c.type = 'expense'
 ";
 
-$params = [$user_id];
+$params = [];
 
 if ($selected_month) {
     $sql .= " AND strftime('%Y-%m', t.date) = ?";

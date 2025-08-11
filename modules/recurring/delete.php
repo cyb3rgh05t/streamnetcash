@@ -51,7 +51,7 @@ try {
         $stmt->execute([$recurring_id, $user_id]);
 
         // Lösche wiederkehrende Transaktion
-        $stmt = $pdo->prepare("DELETE FROM recurring_transactions WHERE id = ? AND user_id = ?");
+        $stmt = $pdo->prepare("DELETE FROM recurring_transactions WHERE id = ?");
         $stmt->execute([$recurring_id, $user_id]);
 
         if ($stmt->rowCount() > 0) {

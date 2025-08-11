@@ -30,10 +30,10 @@ $sql = "
     SELECT rt.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
     FROM recurring_transactions rt
     JOIN categories c ON rt.category_id = c.id
-    WHERE rt.user_id = ?
+    WHERE rt.user_id IS NOT NULL
 ";
 
-$params = [$user_id];
+$params = [];
 
 if ($selected_type) {
     $sql .= " AND c.type = ?";

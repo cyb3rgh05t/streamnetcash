@@ -14,8 +14,8 @@ $pdo = $db->getConnection();
 $user_id = $_SESSION['user_id'];
 
 // Kategorien laden
-$stmt = $pdo->prepare("SELECT * FROM categories WHERE user_id = ? ORDER BY type, name");
-$stmt->execute([$user_id]);
+$stmt = $pdo->prepare("SELECT * FROM categories ORDER BY type, name");
+$stmt->execute([]);
 $all_categories = $stmt->fetchAll();
 
 // Nach Typen trennen
@@ -30,9 +30,9 @@ foreach ($all_categories as $category) {
             COALESCE(SUM(amount), 0) as total_amount,
             MAX(date) as last_used
         FROM transactions 
-        WHERE category_id = ? AND user_id = ?
+        WHERE category_id = ?
     ");
-    $stmt->execute([$category['id'], $user_id]);
+    $stmt->execute([$category['id']]);
     $stats = $stmt->fetch();
 
     // Sicherstellen dass alle Werte gesetzt sind

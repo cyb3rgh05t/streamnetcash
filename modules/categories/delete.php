@@ -24,7 +24,7 @@ if (empty($category_id)) {
 
 try {
     // Prüfe ob Kategorie existiert und dem Benutzer gehört
-    $stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ? AND user_id = ?");
+    $stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ?");
     $stmt->execute([$category_id, $user_id]);
     $category = $stmt->fetch();
 

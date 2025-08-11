@@ -22,7 +22,7 @@ if (empty($category_id)) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ? AND user_id = ?");
+$stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ?");
 $stmt->execute([$category_id, $user_id]);
 $category = $stmt->fetch();
 

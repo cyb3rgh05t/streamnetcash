@@ -25,7 +25,7 @@ if (empty($recurring_id)) {
 
 try {
     // Prüfe ob wiederkehrende Transaktion existiert und dem Benutzer gehört
-    $stmt = $pdo->prepare("SELECT * FROM recurring_transactions WHERE id = ? AND user_id = ?");
+    $stmt = $pdo->prepare("SELECT * FROM recurring_transactions WHERE id = ?");
     $stmt->execute([$recurring_id, $user_id]);
     $recurring = $stmt->fetch();
 

@@ -28,7 +28,7 @@ try {
         SELECT t.*, c.name as category_name
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
-        WHERE t.id = ? AND t.user_id = ? AND c.type = 'income'
+        WHERE t.id = ? AND c.type = 'income'
     ");
     $stmt->execute([$income_id, $user_id]);
     $income = $stmt->fetch();

@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prüfe ob Kategorie dem Benutzer gehört
     if (!empty($category_id)) {
-        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND user_id = ?");
+        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ?");
         $stmt->execute([$category_id, $user_id]);
         if (!$stmt->fetch()) {
             $errors[] = 'Ungültige Kategorie ausgewählt.';

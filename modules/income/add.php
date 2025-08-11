@@ -13,9 +13,9 @@ $db = new Database();
 $pdo = $db->getConnection();
 $user_id = $_SESSION['user_id'];
 
-// Kategorien für Dropdown laden (nur Einnahmen-Kategorien)
+// FIXED: Kategorien für Dropdown laden (keine user_id Filter mehr)
 $stmt = $pdo->prepare("SELECT * FROM categories WHERE type = 'income' ORDER BY name");
-$stmt->execute([]);
+$stmt->execute();
 $categories = $stmt->fetchAll();
 
 // Form-Verarbeitung
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $note = 'Einnahme'; // Standard-Beschreibung
     }
 
-    // Prüfe ob Kategorie dem Benutzer gehört und vom Typ 'income' ist
+    // FIXED: Prüfe ob Kategorie existiert (ohne user_id Filter)
     if (!empty($category_id)) {
         $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND type = 'income'");
         $stmt->execute([$category_id]);
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            // UPDATED: Neue Schema-Struktur (note, date, kein type)
+            // Transaktion erstellen (user_id wird noch gespeichert für Referenz)
             $stmt = $pdo->prepare("
                 INSERT INTO transactions (user_id, category_id, amount, note, date, created_at)
                 VALUES (?, ?, ?, ?, ?, datetime('now'))
@@ -131,7 +131,7 @@ $form_data = [
             <div class="page-header">
                 <div>
                     <h1 style="color: #4ade80; margin-bottom: 5px;">💰 Neue Einnahme</h1>
-                    <p style="color: var(--clr-surface-a50);">Füge eine neue Einnahme zu deinem Budget hinzu</p>
+                    <p style="color: var(--clr-surface-a50);">Füge eine neue Einnahme zur gemeinsamen Datenbank hinzu</p>
                 </div>
                 <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
             </div>
@@ -140,7 +140,7 @@ $form_data = [
                 <div class="form-card">
                     <div class="form-header">
                         <h2>💰 Einnahme hinzufügen</h2>
-                        <p>Erfasse alle Details deiner Einnahme</p>
+                        <p>Erfasse alle Details deiner Einnahme - wird für alle User sichtbar</p>
                     </div>
 
                     <?php if (!empty($errors)): ?>
@@ -219,7 +219,7 @@ $form_data = [
                             <li>Wähle die passende Kategorie für deine Einnahme</li>
                             <li>Gib eine aussagekräftige Beschreibung ein</li>
                             <li>Trage das korrekte Einnahmedatum ein</li>
-                            <li>Erfasse alle Einkommensquellen regelmäßig</li>
+                            <li>Alle User können diese Einnahme sehen und bearbeiten</li>
                         </ul>
 
                         <div class="income-examples">

@@ -15,7 +15,7 @@ $user_id = $_SESSION['user_id'];
 
 $income_id = $_GET['id'] ?? '';
 
-// Einnahme laden und Berechtigung prüfen (UPDATED: neue Schema-Struktur)
+// FIXED: Einnahme laden (ohne user_id Filter da gemeinsame Nutzung)
 if (empty($income_id)) {
     $_SESSION['error'] = 'Keine Einnahme angegeben.';
     header('Location: index.php');
@@ -28,18 +28,18 @@ $stmt = $pdo->prepare("
     JOIN categories c ON t.category_id = c.id
     WHERE t.id = ? AND c.type = 'income'
 ");
-$stmt->execute([$income_id, $user_id]);
+$stmt->execute([$income_id]);
 $income = $stmt->fetch();
 
 if (!$income) {
-    $_SESSION['error'] = 'Einnahme nicht gefunden oder keine Berechtigung.';
+    $_SESSION['error'] = 'Einnahme nicht gefunden.';
     header('Location: index.php');
     exit;
 }
 
-// Kategorien für Dropdown laden (nur Einnahmen-Kategorien)
+// FIXED: Kategorien für Dropdown laden (ohne user_id Filter)
 $stmt = $pdo->prepare("SELECT * FROM categories WHERE type = 'income' ORDER BY name");
-$stmt->execute([]);
+$stmt->execute();
 $categories = $stmt->fetchAll();
 
 // Form-Verarbeitung
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $note = 'Einnahme'; // Standard-Beschreibung
     }
 
-    // Prüfe ob Kategorie dem Benutzer gehört und vom Typ 'income' ist
+    // FIXED: Prüfe ob Kategorie existiert (ohne user_id Filter)
     if (!empty($category_id)) {
         $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND type = 'income'");
         $stmt->execute([$category_id]);
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            // UPDATED: Neue Schema-Struktur (note, date)
+            // FIXED: Update ohne user_id Filter
             $stmt = $pdo->prepare("
                 UPDATE transactions 
                 SET category_id = ?, amount = ?, note = ?, date = ?
@@ -95,8 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 floatval($amount),
                 $note,
                 $date,
-                $income_id,
-                $user_id
+                $income_id
             ]);
 
             $_SESSION['success'] = 'Einnahme erfolgreich aktualisiert!';
@@ -155,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="page-header">
                 <div>
                     <h1 style="color: #4ade80; margin-bottom: 5px;">✏️ Einnahme bearbeiten</h1>
-                    <p style="color: var(--clr-surface-a50);">Aktualisiere die Details deiner Einnahme</p>
+                    <p style="color: var(--clr-surface-a50);">Aktualisiere die Details dieser Einnahme - Sichtbar für alle User</p>
                 </div>
                 <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
             </div>

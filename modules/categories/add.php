@@ -113,10 +113,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Ungültiger Farbcode-Format.';
         }
 
-        // Prüfe ob Name bereits existiert (für diesen Benutzer und Typ)
+        // FIXED: Prüfe ob Name bereits existiert (ohne user_id Filter da gemeinsame Kategorien)
         if (!empty($name) && !empty($type)) {
-            $stmt = $pdo->prepare("SELECT id FROM categories WHERE user_id = ? AND name = ? AND type = ?");
-            $stmt->execute([$user_id, $name, $type]);
+            $stmt = $pdo->prepare("SELECT id FROM categories WHERE name = ? AND type = ?");
+            $stmt->execute([$name, $type]);
             if ($stmt->fetch()) {
                 $errors[] = 'Eine Kategorie mit diesem Namen existiert bereits für diesen Typ.';
             }
@@ -124,9 +124,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($errors)) {
             try {
-                // Prüfe nochmals ob Kategorie bereits existiert (Race Condition Schutz)
-                $stmt = $pdo->prepare("SELECT id FROM categories WHERE user_id = ? AND name = ? AND type = ?");
-                $stmt->execute([$user_id, $name, $type]);
+                // FIXED: Prüfe nochmals ob Kategorie bereits existiert (Race Condition Schutz)
+                $stmt = $pdo->prepare("SELECT id FROM categories WHERE name = ? AND type = ?");
+                $stmt->execute([$name, $type]);
                 if ($stmt->fetch()) {
                     $errors[] = 'Kategorie "' . htmlspecialchars($name) . '" existiert bereits.';
                 } else {
@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->execute([$user_id, $name, $type, $icon, $color]);
 
                     // Erfolg-Nachricht setzen und sofort weiterleiten (verhindert Doppel-Submit)
-                    $_SESSION['success'] = 'Kategorie "' . htmlspecialchars($name) . '" erfolgreich erstellt!';
+                    $_SESSION['success'] = 'Kategorie "' . htmlspecialchars($name) . '" erfolgreich erstellt und für alle User verfügbar!';
 
                     // JavaScript-basierte Weiterleitung + HTTP Header für Sicherheit
                     echo '<script>window.location.replace("index.php");</script>';
@@ -206,7 +206,7 @@ $form_data = [
             <div class="page-header">
                 <div>
                     <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">🏷️ Neue Kategorie</h1>
-                    <p style="color: var(--clr-surface-a50);">Erstelle eine neue Kategorie für deine Transaktionen</p>
+                    <p style="color: var(--clr-surface-a50);">Erstelle eine neue gemeinsame Kategorie für alle User</p>
                 </div>
                 <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
             </div>
@@ -215,7 +215,15 @@ $form_data = [
                 <div class="form-card">
                     <div class="form-header">
                         <h2>🏷️ Kategorie erstellen</h2>
-                        <p>Definiere eine neue Kategorie mit Name, Typ, Icon und Farbe</p>
+                        <p>Definiere eine neue Kategorie mit Name, Typ, Icon und Farbe - wird für alle User sichtbar</p>
+                    </div>
+
+                    <!-- Shared Notice -->
+                    <div style="background-color: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                        <div style="color: #93c5fd; font-weight: 600; margin-bottom: 8px; font-size: 14px;">🤝 Gemeinsame Kategorie</div>
+                        <div style="color: var(--clr-surface-a50); font-size: 13px;">
+                            Diese Kategorie wird für alle registrierten User sichtbar und verwendbar sein.
+                        </div>
                     </div>
 
                     <?php if (!empty($errors)): ?>

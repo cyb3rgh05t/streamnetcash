@@ -15,7 +15,7 @@ $user_id = $_SESSION['user_id'];
 
 $expense_id = $_GET['id'] ?? '';
 
-// Ausgabe laden und Berechtigung prüfen (UPDATED: neue Schema-Struktur)
+// FIXED: Ausgabe laden (ohne user_id Filter da gemeinsame Nutzung)
 if (empty($expense_id)) {
     $_SESSION['error'] = 'Keine Ausgabe angegeben.';
     header('Location: index.php');
@@ -32,14 +32,14 @@ $stmt->execute([$expense_id]);
 $expense = $stmt->fetch();
 
 if (!$expense) {
-    $_SESSION['error'] = 'Ausgabe nicht gefunden oder keine Berechtigung.';
+    $_SESSION['error'] = 'Ausgabe nicht gefunden.';
     header('Location: index.php');
     exit;
 }
 
-// Kategorien für Dropdown laden (nur Ausgaben-Kategorien)
+// FIXED: Kategorien für Dropdown laden (ohne user_id Filter)
 $stmt = $pdo->prepare("SELECT * FROM categories WHERE type = 'expense' ORDER BY name");
-$stmt->execute([]);
+$stmt->execute();
 $categories = $stmt->fetchAll();
 
 // Form-Verarbeitung
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $note = 'Ausgabe'; // Standard-Beschreibung
     }
 
-    // Prüfe ob Kategorie dem Benutzer gehört und vom Typ 'expense' ist
+    // FIXED: Prüfe ob Kategorie existiert (ohne user_id Filter)
     if (!empty($category_id)) {
         $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND type = 'expense'");
         $stmt->execute([$category_id]);
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            // UPDATED: Neue Schema-Struktur (note, date)
+            // FIXED: Update ohne user_id Filter
             $stmt = $pdo->prepare("
                 UPDATE transactions 
                 SET category_id = ?, amount = ?, note = ?, date = ?
@@ -95,8 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 floatval($amount),
                 $note,
                 $date,
-                $expense_id,
-                $user_id
+                $expense_id
             ]);
 
             $_SESSION['success'] = 'Ausgabe erfolgreich aktualisiert!';
@@ -156,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="page-header">
                 <div>
                     <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">✏️ Ausgabe bearbeiten</h1>
-                    <p style="color: var(--clr-surface-a50);">Aktualisiere die Details deiner Ausgabe</p>
+                    <p style="color: var(--clr-surface-a50);">Aktualisiere die Details dieser Ausgabe - Sichtbar für alle User</p>
                 </div>
                 <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
             </div>

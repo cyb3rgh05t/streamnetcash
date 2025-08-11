@@ -23,25 +23,25 @@ if (empty($expense_id)) {
 }
 
 try {
-    // Prüfe ob Ausgabe existiert und dem Benutzer gehört (UPDATED: neue Schema-Struktur)
+    // FIXED: Prüfe ob Ausgabe existiert (ohne user_id Filter da gemeinsame Nutzung)
     $stmt = $pdo->prepare("
         SELECT t.*, c.name as category_name
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
-        WHERE t.id = ? AND c.type = 'expense' 
+        WHERE t.id = ? AND c.type = 'expense'
     ");
     $stmt->execute([$expense_id]);
     $expense = $stmt->fetch();
 
     if (!$expense) {
-        $_SESSION['error'] = 'Ausgabe nicht gefunden oder keine Berechtigung.';
+        $_SESSION['error'] = 'Ausgabe nicht gefunden.';
         header('Location: index.php');
         exit;
     }
 
-    // Ausgabe löschen
+    // FIXED: Ausgabe löschen (ohne user_id Filter)
     $stmt = $pdo->prepare("DELETE FROM transactions WHERE id = ?");
-    $stmt->execute([$expense_id, $user_id]);
+    $stmt->execute([$expense_id]);
 
     if ($stmt->rowCount() > 0) {
         $_SESSION['success'] = sprintf(

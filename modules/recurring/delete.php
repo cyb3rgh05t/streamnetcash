@@ -26,12 +26,12 @@ if (empty($recurring_id)) {
 try {
     // Prüfe ob wiederkehrende Transaktion existiert und dem Benutzer gehört
     $stmt = $pdo->prepare("
-        SELECT rt.*, c.name as category_name
-        FROM recurring_transactions rt
-        JOIN categories c ON rt.category_id = c.id
-        WHERE rt.id = ? AND rt.user_id = ?
-    ");
-    $stmt->execute([$recurring_id, $user_id]);
+    SELECT rt.*, c.name as category_name
+    FROM recurring_transactions rt
+    JOIN categories c ON rt.category_id = c.id
+    WHERE rt.id = ?
+");
+    $stmt->execute([$recurring_id]);
     $recurring = $stmt->fetch();
 
     if (!$recurring) {
@@ -44,15 +44,15 @@ try {
     try {
         // Entferne Verknüpfung zu bestehenden Transaktionen (setze recurring_transaction_id auf NULL)
         $stmt = $pdo->prepare("
-            UPDATE transactions 
-            SET recurring_transaction_id = NULL 
-            WHERE recurring_transaction_id = ? AND user_id = ?
-        ");
-        $stmt->execute([$recurring_id, $user_id]);
+    UPDATE transactions 
+    SET recurring_transaction_id = NULL 
+    WHERE recurring_transaction_id = ?
+");
+        $stmt->execute([$recurring_id]);
 
         // Lösche wiederkehrende Transaktion
         $stmt = $pdo->prepare("DELETE FROM recurring_transactions WHERE id = ?");
-        $stmt->execute([$recurring_id, $user_id]);
+        $stmt->execute([$recurring_id]);
 
         if ($stmt->rowCount() > 0) {
             $_SESSION['success'] = sprintf(

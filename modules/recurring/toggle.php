@@ -26,7 +26,7 @@ if (empty($recurring_id)) {
 try {
     // Prüfe ob wiederkehrende Transaktion existiert und dem Benutzer gehört
     $stmt = $pdo->prepare("SELECT * FROM recurring_transactions WHERE id = ?");
-    $stmt->execute([$recurring_id, $user_id]);
+    $stmt->execute([$recurring_id]);
     $recurring = $stmt->fetch();
 
     if (!$recurring) {
@@ -37,8 +37,8 @@ try {
 
     // Status umschalten
     $new_status = $recurring['is_active'] ? 0 : 1;
-    $stmt = $pdo->prepare("UPDATE recurring_transactions SET is_active = ? WHERE id = ? AND user_id = ?");
-    $stmt->execute([$new_status, $recurring_id, $user_id]);
+    $stmt = $pdo->prepare("UPDATE recurring_transactions SET is_active = ? WHERE id = ?");
+    $stmt->execute([$new_status, $recurring_id]);
 
     if ($stmt->rowCount() > 0) {
         $status_text = $new_status ? 'aktiviert' : 'pausiert';

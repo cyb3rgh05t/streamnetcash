@@ -26,9 +26,9 @@ $stmt = $pdo->prepare("
     SELECT rt.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
     FROM recurring_transactions rt
     JOIN categories c ON rt.category_id = c.id
-    WHERE rt.id = ? AND rt.user_id = ?
+    WHERE rt.id = ?
 ");
-$stmt->execute([$recurring_id, $user_id]);
+$stmt->execute([$recurring_id]);
 $recurring = $stmt->fetch();
 
 if (!$recurring) {
@@ -39,7 +39,7 @@ if (!$recurring) {
 
 // Kategorien für Dropdown laden
 $stmt = $pdo->prepare("SELECT * FROM categories ORDER BY type, name");
-$stmt->execute([]);
+$stmt->execute();
 $categories = $stmt->fetchAll();
 
 // Nach Typ trennen
@@ -100,7 +100,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Ungültige Kategorie ausgewählt.';
         }
     }
-
     if (empty($errors)) {
         try {
             // Wenn Häufigkeit oder Startdatum geändert wurde, nächste Fälligkeit neu berechnen
@@ -116,10 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $stmt = $pdo->prepare("
-                UPDATE recurring_transactions 
-                SET category_id = ?, amount = ?, note = ?, frequency = ?, start_date = ?, end_date = ?, next_due_date = ?
-                WHERE id = ?
-            ");
+    UPDATE recurring_transactions 
+    SET category_id = ?, amount = ?, note = ?, frequency = ?, start_date = ?, end_date = ?, next_due_date = ?
+    WHERE id = ?
+");
 
             $stmt->execute([
                 $category_id,
@@ -129,8 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $start_date,
                 $end_date ?: null,
                 $next_due_date,
-                $recurring_id,
-                $user_id
+                $recurring_id
             ]);
 
             $_SESSION['success'] = 'Wiederkehrende Transaktion erfolgreich aktualisiert!';

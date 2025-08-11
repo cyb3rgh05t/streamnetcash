@@ -13,9 +13,9 @@ $db = new Database();
 $pdo = $db->getConnection();
 $user_id = $_SESSION['user_id'];
 
-// Kategorien für Dropdown laden (nur Ausgaben-Kategorien)
+// FIXED: Kategorien für Dropdown laden (ohne user_id Filter)
 $stmt = $pdo->prepare("SELECT * FROM categories WHERE type = 'expense' ORDER BY name");
-$stmt->execute([]);
+$stmt->execute();
 $categories = $stmt->fetchAll();
 
 // Form-Verarbeitung
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $note = 'Ausgabe'; // Standard-Beschreibung
     }
 
-    // Prüfe ob Kategorie dem Benutzer gehört und vom Typ 'expense' ist
+    // FIXED: Prüfe ob Kategorie existiert (ohne user_id Filter)
     if (!empty($category_id)) {
         $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND type = 'expense'");
         $stmt->execute([$category_id]);
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            // UPDATED: Neue Schema-Struktur (note, date, kein type)
+            // Transaktion erstellen (user_id wird noch gespeichert für Referenz)
             $stmt = $pdo->prepare("
                 INSERT INTO transactions (user_id, category_id, amount, note, date, created_at)
                 VALUES (?, ?, ?, ?, ?, datetime('now'))
@@ -131,7 +131,7 @@ $form_data = [
             <div class="page-header">
                 <div>
                     <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">💸 Neue Ausgabe</h1>
-                    <p style="color: var(--clr-surface-a50);">Füge eine neue Ausgabe zu deinem Budget hinzu</p>
+                    <p style="color: var(--clr-surface-a50);">Füge eine neue Ausgabe zur gemeinsamen Datenbank hinzu</p>
                 </div>
                 <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
             </div>
@@ -140,7 +140,7 @@ $form_data = [
                 <div class="form-card">
                     <div class="form-header">
                         <h2>💸 Ausgabe hinzufügen</h2>
-                        <p>Erfasse alle Details deiner Ausgabe</p>
+                        <p>Erfasse alle Details deiner Ausgabe - wird für alle User sichtbar</p>
                     </div>
 
                     <?php if (!empty($errors)): ?>
@@ -219,7 +219,7 @@ $form_data = [
                             <li>Wähle die passende Kategorie für deine Ausgabe</li>
                             <li>Gib eine aussagekräftige Beschreibung ein</li>
                             <li>Trage das korrekte Ausgabedatum ein</li>
-                            <li>Runde Beträge auf Cent genau</li>
+                            <li>Alle User können diese Ausgabe sehen und bearbeiten</li>
                         </ul>
                     </div>
                 </div>
@@ -251,7 +251,7 @@ $form_data = [
 
         // Initial preview update
         document.addEventListener('DOMContentLoaded', function() {
-            updatePreview();
+            updateCategoryPreview();
 
             // Focus auf ersten Input
             const firstInput = document.querySelector('select, input');

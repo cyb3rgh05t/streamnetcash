@@ -13,16 +13,16 @@ $db = new Database();
 $pdo = $db->getConnection();
 $user_id = $_SESSION['user_id'];
 
-// Kategorien laden
+// FIXED: Kategorien laden (ohne user_id Filter für gemeinsame Nutzung)
 $stmt = $pdo->prepare("SELECT * FROM categories ORDER BY type, name");
-$stmt->execute([]);
+$stmt->execute();
 $all_categories = $stmt->fetchAll();
 
 // Nach Typen trennen
 $income_categories = [];
 $expense_categories = [];
 
-// Statistiken für jede Kategorie laden (mit neuer Schema-Struktur)
+// FIXED: Statistiken für jede Kategorie laden (ohne user_id Filter)
 foreach ($all_categories as $category) {
     $stmt = $pdo->prepare("
         SELECT 
@@ -78,7 +78,7 @@ if (isset($_SESSION['error'])) {
             <div class="sidebar-header">
                 <a class="sidebar-logo">
                     <img src="../../assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                    <h2 class="sidebar-logo-text">StreamNet Finance</h2>
+
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
@@ -99,17 +99,17 @@ if (isset($_SESSION['error'])) {
         </aside>
 
         <main class="main-content">
-
-
             <div class="page-header">
                 <div>
                     <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">🏷️ Kategorien</h1>
-                    <p style="color: var(--clr-surface-a50);">Verwalte deine Einnahmen- und Ausgaben-Kategorien</p>
+                    <p style="color: var(--clr-surface-a50);">Verwalte die gemeinsamen Einnahmen- und Ausgaben-Kategorien für alle User</p>
                 </div>
                 <a href="add.php" class="btn">+ Neue Kategorie</a>
             </div>
 
             <?= $message ?>
+
+
 
             <div class="categories-grid">
                 <!-- Einnahmen-Kategorien -->
@@ -124,7 +124,7 @@ if (isset($_SESSION['error'])) {
                     <?php if (empty($income_categories)): ?>
                         <div class="empty-section">
                             <h4>Noch keine Einnahmen-Kategorien</h4>
-                            <p>Erstelle deine erste Kategorie für Einnahmen.</p>
+                            <p>Erstelle die erste gemeinsame Kategorie für Einnahmen.</p>
                             <div style="margin-top: 15px;">
                                 <a href="add.php?type=income" class="btn btn-small">+ Einnahmen-Kategorie</a>
                             </div>
@@ -141,7 +141,7 @@ if (isset($_SESSION['error'])) {
                                         <div class="category-name"><?= htmlspecialchars($category['name']) ?></div>
                                         <div class="category-usage">
                                             <?php if ($category['stats']['transaction_count'] > 0): ?>
-                                                <?= $category['stats']['transaction_count'] ?> Transaktionen
+                                                <?= $category['stats']['transaction_count'] ?> Transaktionen (alle User)
                                                 • Zuletzt: <?= date('d.m.Y', strtotime($category['stats']['last_used'])) ?>
                                             <?php else: ?>
                                                 Noch nicht verwendet
@@ -162,7 +162,7 @@ if (isset($_SESSION['error'])) {
                                         <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
                                         <?php if ($category['stats']['transaction_count'] == 0): ?>
                                             <a href="delete.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-delete"
-                                                onclick="return confirm('Kategorie wirklich löschen?')" title="Löschen">🗑️</a>
+                                                onclick="return confirm('Kategorie wirklich löschen? Dies betrifft alle User!')" title="Löschen">🗑️</a>
                                         <?php else: ?>
                                             <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden">🔒</button>
                                         <?php endif; ?>
@@ -185,7 +185,7 @@ if (isset($_SESSION['error'])) {
                     <?php if (empty($expense_categories)): ?>
                         <div class="empty-section">
                             <h4>Noch keine Ausgaben-Kategorien</h4>
-                            <p>Erstelle deine erste Kategorie für Ausgaben.</p>
+                            <p>Erstelle die erste gemeinsame Kategorie für Ausgaben.</p>
                             <div style="margin-top: 15px;">
                                 <a href="add.php?type=expense" class="btn btn-small">+ Ausgaben-Kategorie</a>
                             </div>
@@ -202,7 +202,7 @@ if (isset($_SESSION['error'])) {
                                         <div class="category-name"><?= htmlspecialchars($category['name']) ?></div>
                                         <div class="category-usage">
                                             <?php if ($category['stats']['transaction_count'] > 0): ?>
-                                                <?= $category['stats']['transaction_count'] ?> Transaktionen
+                                                <?= $category['stats']['transaction_count'] ?> Transaktionen (alle User)
                                                 • Zuletzt: <?= date('d.m.Y', strtotime($category['stats']['last_used'])) ?>
                                             <?php else: ?>
                                                 Noch nicht verwendet
@@ -223,7 +223,7 @@ if (isset($_SESSION['error'])) {
                                         <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
                                         <?php if ($category['stats']['transaction_count'] == 0): ?>
                                             <a href="delete.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-delete"
-                                                onclick="return confirm('Kategorie wirklich löschen?')" title="Löschen">🗑️</a>
+                                                onclick="return confirm('Kategorie wirklich löschen? Dies betrifft alle User!')" title="Löschen">🗑️</a>
                                         <?php else: ?>
                                             <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden">🔒</button>
                                         <?php endif; ?>
@@ -252,8 +252,8 @@ if (isset($_SESSION['error'])) {
                         <strong>Nicht zu viele:</strong> 5-10 Kategorien pro Typ reichen meist aus.
                     </div>
                     <div class="tip-item">
-                        <span class="tip-icon">🔄</span>
-                        <strong>Anpassbar:</strong> Du kannst Kategorien jederzeit bearbeiten, aber nicht löschen wenn sie verwendet werden.
+                        <span class="tip-icon">🤝</span>
+                        <strong>Gemeinsam:</strong> Alle User verwenden dieselben Kategorien - stimmt euch ab!
                     </div>
                 </div>
             </div>

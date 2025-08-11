@@ -25,7 +25,7 @@ if (empty($category_id)) {
 try {
     // Prüfe ob Kategorie existiert und dem Benutzer gehört
     $stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ?");
-    $stmt->execute([$category_id, $user_id]);
+    $stmt->execute([$category_id]);
     $category = $stmt->fetch();
 
     if (!$category) {
@@ -35,8 +35,8 @@ try {
     }
 
     // Prüfe ob Kategorie in Transaktionen verwendet wird
-    $stmt = $pdo->prepare("SELECT COUNT(*) as transaction_count FROM transactions WHERE category_id = ? AND user_id = ?");
-    $stmt->execute([$category_id, $user_id]);
+    $stmt = $pdo->prepare("SELECT COUNT(*) as transaction_count FROM transactions WHERE category_id = ?");
+    $stmt->execute([$category_id]);
     $transaction_count = $stmt->fetchColumn();
 
     if ($transaction_count > 0) {
@@ -51,7 +51,7 @@ try {
 
     // Kategorie löschen
     $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
-    $stmt->execute([$category_id, $user_id]);
+    $stmt->execute([$category_id]);
 
     if ($stmt->rowCount() > 0) {
         $_SESSION['success'] = sprintf(

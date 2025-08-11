@@ -296,7 +296,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="sidebar-header">
                 <a class="sidebar-logo">
                     <img src="assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                    <h2 class="sidebar-logo-text">StreamNet Finance</h2>
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>

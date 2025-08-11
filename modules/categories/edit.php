@@ -23,7 +23,7 @@ if (empty($category_id)) {
 }
 
 $stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ?");
-$stmt->execute([$category_id, $user_id]);
+$stmt->execute([$category_id]);
 $category = $stmt->fetch();
 
 if (!$category) {
@@ -39,9 +39,9 @@ $stmt = $pdo->prepare("
         COALESCE(SUM(amount), 0) as total_amount,
         MAX(date) as last_used
     FROM transactions 
-    WHERE category_id = ? AND user_id = ?
+    WHERE category_id = ?
 ");
-$stmt->execute([$category_id, $user_id]);
+$stmt->execute([$category_id]);
 $stats = $stmt->fetch();
 
 // Vordefinierte Icons und Farben
@@ -128,8 +128,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prüfe ob Name bereits existiert (für diesen Benutzer und Typ, außer bei der aktuellen Kategorie)
     if (!empty($name)) {
-        $stmt = $pdo->prepare("SELECT id FROM categories WHERE user_id = ? AND name = ? AND type = ? AND id != ?");
-        $stmt->execute([$user_id, $name, $category['type'], $category_id]);
+        $stmt = $pdo->prepare("SELECT id FROM categories WHERE name = ? AND type = ? AND id != ?");
+        $stmt->execute([$name, $category['type'], $category_id]);
         if ($stmt->fetch()) {
             $errors[] = 'Eine andere Kategorie mit diesem Namen existiert bereits für diesen Typ.';
         }
@@ -138,12 +138,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             $stmt = $pdo->prepare("
-                UPDATE categories 
-                SET name = ?, icon = ?, color = ?
-                WHERE id = ?
-            ");
+    UPDATE categories 
+    SET name = ?, icon = ?, color = ?
+    WHERE id = ?
+");
 
-            $stmt->execute([$name, $icon, $color, $category_id, $user_id]);
+
+            $stmt->execute([$name, $icon, $color, $category_id]);
 
             $_SESSION['success'] = 'Kategorie "' . htmlspecialchars($name) . '" erfolgreich aktualisiert!';
             header('Location: index.php');

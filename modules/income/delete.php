@@ -23,25 +23,25 @@ if (empty($income_id)) {
 }
 
 try {
-    // Prüfe ob Einnahme existiert und dem Benutzer gehört (FIXED: c.type statt t.type)
+    // FIXED: Prüfe ob Einnahme existiert (ohne user_id Filter da gemeinsame Nutzung)
     $stmt = $pdo->prepare("
         SELECT t.*, c.name as category_name
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
         WHERE t.id = ? AND c.type = 'income'
     ");
-    $stmt->execute([$income_id, $user_id]);
+    $stmt->execute([$income_id]);
     $income = $stmt->fetch();
 
     if (!$income) {
-        $_SESSION['error'] = 'Einnahme nicht gefunden oder keine Berechtigung.';
+        $_SESSION['error'] = 'Einnahme nicht gefunden.';
         header('Location: index.php');
         exit;
     }
 
-    // Einnahme löschen
+    // FIXED: Einnahme löschen (ohne user_id Filter)
     $stmt = $pdo->prepare("DELETE FROM transactions WHERE id = ?");
-    $stmt->execute([$income_id, $user_id]);
+    $stmt->execute([$income_id]);
 
     if ($stmt->rowCount() > 0) {
         $_SESSION['success'] = sprintf(

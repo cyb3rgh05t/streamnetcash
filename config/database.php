@@ -189,6 +189,7 @@ class Database
     /**
      * Ensures a basic category set exists for a given user.
      * Call this after creating a new user account.
+     * FIXED: Prüft jetzt ob überhaupt Kategorien existieren, nicht user-spezifisch
      *
      * @param int $user_id
      */
@@ -196,9 +197,9 @@ class Database
     {
         $pdo = $this->getConnection();
 
-        // If the user already has categories, do nothing
+        // FIXED: If ANY categories exist, do nothing (shared categories)
         $check = $pdo->prepare('SELECT COUNT(*) AS cnt FROM categories');
-        $check->execute([]);
+        $check->execute();
         $row = $check->fetch();
         if ($row && (int)$row['cnt'] > 0) {
             return;
@@ -259,7 +260,7 @@ class Database
         $stmt->execute([$username, $email, $password_hash]);
         $user_id = (int)$pdo->lastInsertId();
 
-        // Create default categories for new user
+        // Create default categories for new user (only if no categories exist)
         $this->ensureDefaultCategories($user_id);
 
         return $user_id;
@@ -295,6 +296,7 @@ class Database
 
     /**
      * Update user's starting balance
+     * FIXED: Verwendet gemeinsames Startkapital (erste User)
      *
      * @param int $user_id
      * @param float $starting_balance
@@ -304,18 +306,19 @@ class Database
     {
         $pdo = $this->getConnection();
 
-        // Immer den ersten User updaten
+        // FIXED: Immer den ersten User updaten (gemeinsames Startkapital)
         $stmt = $pdo->prepare('
-        UPDATE users 
-        SET starting_balance = ? 
-        WHERE id = (SELECT MIN(id) FROM users)
-    ');
+            UPDATE users 
+            SET starting_balance = ? 
+            WHERE id = (SELECT MIN(id) FROM users)
+        ');
 
         return $stmt->execute([$starting_balance]);
     }
 
     /**
      * Get user's starting balance
+     * FIXED: Verwendet gemeinsames Startkapital (erste User)
      *
      * @param int $user_id
      * @return float Starting balance
@@ -324,9 +327,9 @@ class Database
     {
         $pdo = $this->getConnection();
 
-        // Immer das Startkapital vom ersten User verwenden
+        // FIXED: Immer das Startkapital vom ersten User verwenden (gemeinsam)
         $stmt = $pdo->prepare('SELECT starting_balance FROM users ORDER BY id ASC LIMIT 1');
-        $stmt->execute([]);
+        $stmt->execute();
         $result = $stmt->fetchColumn();
 
         return $result !== false ? (float)$result : 0.00;
@@ -334,9 +337,9 @@ class Database
 
     /**
      * Process due recurring transactions
-     * Call this regularly (e.g., via cron job or on login)
+     * FIXED: Verarbeitet alle fälligen Transaktionen, nicht user-spezifisch
      *
-     * @param int|null $user_id Process only for specific user (optional)
+     * @param int|null $user_id Process only for specific user (optional, deprecated for shared usage)
      * @return int Number of transactions created
      */
     public function processDueRecurringTransactions(?int $user_id = null): int
@@ -345,7 +348,7 @@ class Database
         $today = date('Y-m-d');
         $transactions_created = 0;
 
-        // Get all due recurring transactions
+        // FIXED: Get all due recurring transactions (shared across all users)
         $sql = "
             SELECT rt.*, c.type as transaction_type
             FROM recurring_transactions rt
@@ -356,8 +359,6 @@ class Database
         ";
 
         $params = [$today, $today];
-
-
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -437,35 +438,37 @@ class Database
 
     /**
      * Get recurring transactions statistics for user
+     * FIXED: Zeigt alle wiederkehrenden Transaktionen (shared)
      *
-     * @param int $user_id
+     * @param int $user_id (deprecated for shared usage)
      * @return array Statistics
      */
     public function getRecurringStats(int $user_id): array
     {
         $pdo = $this->getConnection();
 
+        // FIXED: Get stats for all recurring transactions (shared)
         $stmt = $pdo->prepare("
             SELECT 
                 COUNT(*) as total,
                 COUNT(CASE WHEN is_active = 1 THEN 1 END) as active,
                 COUNT(CASE WHEN is_active = 1 AND next_due_date <= ? THEN 1 END) as due_soon,
                 COUNT(CASE WHEN is_active = 1 AND next_due_date < ? THEN 1 END) as overdue
-            FROM recurring_transactions 
-            WHERE user_id = ?
+            FROM recurring_transactions
         ");
 
         $today = date('Y-m-d');
         $soon = date('Y-m-d', strtotime('+7 days'));
 
-        $stmt->execute([$soon, $today, $user_id]);
+        $stmt->execute([$soon, $today]);
         return $stmt->fetch() ?: [];
     }
 
     /**
      * Get due recurring transactions
+     * FIXED: Zeigt alle fälligen wiederkehrenden Transaktionen (shared)
      *
-     * @param int $user_id
+     * @param int $user_id (deprecated for shared usage)
      * @param int $days_ahead How many days ahead to check (default 3)
      * @return array Recurring transactions
      */
@@ -473,16 +476,17 @@ class Database
     {
         $pdo = $this->getConnection();
 
+        // FIXED: Get all due recurring transactions (shared)
         $stmt = $pdo->prepare("
             SELECT rt.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
             FROM recurring_transactions rt
             JOIN categories c ON rt.category_id = c.id
-            WHERE rt.user_id = ? AND rt.is_active = 1 AND rt.next_due_date <= ?
+            WHERE rt.is_active = 1 AND rt.next_due_date <= ?
             ORDER BY rt.next_due_date ASC
         ");
 
         $due_date = date('Y-m-d', strtotime("+$days_ahead days"));
-        $stmt->execute([$user_id, $due_date]);
+        $stmt->execute([$due_date]);
 
         return $stmt->fetchAll();
     }

@@ -18,12 +18,12 @@ $selected_month = $_GET['month'] ?? date('Y-m');
 $selected_category = $_GET['category'] ?? '';
 $search = $_GET['search'] ?? '';
 
-// Kategorien für Filter laden (nur Einnahmen-Kategorien)
+// Kategorien für Filter laden (nur Einnahmen-Kategorien) - FIXED: Keine Parameter
 $stmt = $pdo->prepare("SELECT * FROM categories WHERE type = 'income' ORDER BY name");
-$stmt->execute([$user_id]);
+$stmt->execute(); // FIXED: Keine Parameter übergeben
 $categories = $stmt->fetchAll();
 
-// Einnahmen laden mit Filtern (UPDATED für neue Schema-Struktur)
+// Einnahmen laden mit Filtern - FIXED: user_id Filter entfernt für gemeinsame Nutzung
 $sql = "
     SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color
     FROM transactions t
@@ -87,7 +87,6 @@ if (isset($_SESSION['error'])) {
             <div class="sidebar-header">
                 <a class="sidebar-logo">
                     <img src="../../assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                    <h2 class="sidebar-logo-text">StreamNet Finance</h2>
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
@@ -111,7 +110,7 @@ if (isset($_SESSION['error'])) {
             <div class="page-header">
                 <div>
                     <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">💰 Einnahmen</h1>
-                    <p style="color: var(--clr-surface-a50);">Verwalte deine Einnahmen und verfolge dein Einkommen</p>
+                    <p style="color: var(--clr-surface-a50);">Verwalte deine Einnahmen und verfolge dein Einkommen - Gemeinsame Ansicht aller User</p>
                 </div>
                 <a href="add.php" class="btn">+ Neue Einnahme</a>
             </div>

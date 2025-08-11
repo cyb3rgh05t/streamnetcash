@@ -15,7 +15,7 @@ $user_id = $_SESSION['user_id'];
 
 // Kategorien für Dropdown laden
 $stmt = $pdo->prepare("SELECT * FROM categories ORDER BY type, name");
-$stmt->execute([]);
+$stmt->execute();
 $categories = $stmt->fetchAll();
 
 // Nach Typ trennen

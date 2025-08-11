@@ -26,7 +26,7 @@ $current_month = date('Y-m');
 // Startkapital laden
 $starting_balance = $db->getStartingBalance($user_id);
 
-// Gesamte Einnahmen diesen Monat (via JOIN mit categories)
+// FIXED: Gesamte Einnahmen diesen Monat - user_id Filter entfernt
 $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(t.amount), 0) as total 
     FROM transactions t
@@ -36,17 +36,17 @@ $stmt = $pdo->prepare("
 $stmt->execute([$current_month]);
 $total_income = $stmt->fetchColumn();
 
-// Gesamte Ausgaben diesen Monat (via JOIN mit categories)
+// FIXED: Gesamte Ausgaben diesen Monat - user_id Filter entfernt
 $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(t.amount), 0) as total 
     FROM transactions t
     JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND c.type = 'expense' AND strftime('%Y-%m', t.date) = ?
+    WHERE c.type = 'expense' AND strftime('%Y-%m', t.date) = ?
 ");
-$stmt->execute([$user_id, $current_month]);
+$stmt->execute([$current_month]);
 $total_expenses = $stmt->fetchColumn();
 
-// Gesamte Einnahmen (alle Zeit)
+// FIXED: Gesamte Einnahmen (alle Zeit) - user_id Filter entfernt
 $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(t.amount), 0) as total 
     FROM transactions t
@@ -54,17 +54,16 @@ $stmt = $pdo->prepare("
     WHERE c.type = 'income'
 ");
 $stmt->execute([]);
-
 $total_income_all_time = $stmt->fetchColumn();
 
-// Gesamte Ausgaben (alle Zeit)
+// FIXED: Gesamte Ausgaben (alle Zeit) - user_id Filter entfernt
 $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(t.amount), 0) as total 
     FROM transactions t
     JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND c.type = 'expense'
+    WHERE c.type = 'expense'
 ");
-$stmt->execute([$user_id]);
+$stmt->execute([]);
 $total_expenses_all_time = $stmt->fetchColumn();
 
 // Saldo berechnen (nur aktueller Monat)
@@ -73,43 +72,41 @@ $balance = $total_income - $total_expenses;
 // Gesamtvermögen berechnen (Startkapital + alle Einnahmen - alle Ausgaben)
 $total_wealth = $starting_balance + $total_income_all_time - $total_expenses_all_time;
 
-// Wiederkehrende Transaktionen Statistiken
+// FIXED: Wiederkehrende Transaktionen Statistiken - user_id Filter entfernt
 $stmt = $pdo->prepare("
     SELECT 
         COUNT(*) as total_recurring,
         COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_recurring,
         COUNT(CASE WHEN is_active = 1 AND next_due_date <= ? THEN 1 END) as due_soon
-    FROM recurring_transactions 
-    WHERE user_id IS NOT NULL
+    FROM recurring_transactions
 ");
 $stmt->execute([date('Y-m-d', strtotime('+7 days'))]);
 $recurring_stats = $stmt->fetch();
 
-// Fällige wiederkehrende Transaktionen für Warning
+// FIXED: Fällige wiederkehrende Transaktionen für Warning - user_id Filter entfernt
 $stmt = $pdo->prepare("
     SELECT rt.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
     FROM recurring_transactions rt
     JOIN categories c ON rt.category_id = c.id
-    WHERE rt.user_id = ? AND rt.is_active = 1 AND rt.next_due_date <= ?
+    WHERE rt.is_active = 1 AND rt.next_due_date <= ?
     ORDER BY rt.next_due_date ASC
     LIMIT 3
 ");
 $stmt->execute([date('Y-m-d', strtotime('+3 days'))]);
 $due_recurring = $stmt->fetchAll();
 
-// Letzte 5 Transaktionen
+// FIXED: Letzte 5 Transaktionen - user_id Filter entfernt
 $stmt = $pdo->prepare("
     SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
     FROM transactions t
     JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id IS NOT NULL
     ORDER BY t.date DESC, t.created_at DESC
     LIMIT 5
 ");
 $stmt->execute([]);
 $recent_transactions = $stmt->fetchAll();
 
-// Ausgaben nach Kategorien für Chart
+// FIXED: Ausgaben nach Kategorien für Chart - user_id Filter entfernt
 $stmt = $pdo->prepare("
     SELECT c.name, c.color, c.icon, COALESCE(SUM(t.amount), 0) as total
     FROM categories c
@@ -287,16 +284,6 @@ if (isset($_SESSION['success'])) {
             margin-top: 20px;
         }
 
-        .db-info {
-            background-color: var(--clr-surface-tonal-a10);
-            border: 1px solid var(--clr-primary-a0);
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 20px;
-            font-size: 12px;
-            color: var(--clr-primary-a20);
-        }
-
         .wealth-breakdown {
             background-color: var(--clr-surface-tonal-a10);
             border-radius: 8px;
@@ -368,6 +355,27 @@ if (isset($_SESSION['success'])) {
             color: #86efac;
         }
 
+        .shared-notice {
+            background-color: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .shared-notice-title {
+            color: #93c5fd;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .shared-notice-text {
+            color: var(--clr-surface-a50);
+            font-size: 13px;
+        }
+
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -397,7 +405,6 @@ if (isset($_SESSION['success'])) {
             <div class="sidebar-header">
                 <a href="dashboard.php" class="sidebar-logo">
                     <img src="assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                    <!-- <h2 class="sidebar-logo-text">StreamNet Finance</h2> -->
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
@@ -418,8 +425,6 @@ if (isset($_SESSION['success'])) {
         </aside>
 
         <main class="main-content">
-
-
             <?= $message ?>
 
             <!-- Warnung für fällige wiederkehrende Transaktionen -->
@@ -445,7 +450,7 @@ if (isset($_SESSION['success'])) {
             <div class="dashboard-header">
                 <div class="welcome-text">
                     <h1>📊 Dashboard</h1>
-                    <p>Überblick über deine Finanzen - <?= date('F Y') ?></p>
+                    <p>Gemeinsamer Überblick über die Finanzen - <?= date('F Y') ?></p>
                 </div>
                 <div class="quick-actions">
                     <a href="modules/income/add.php" class="btn">+ Einnahme</a>
@@ -453,17 +458,19 @@ if (isset($_SESSION['success'])) {
                     <a href="modules/recurring/add.php" class="btn" style="background-color: #6b7280;">🔄 Wiederkehrend</a>
                 </div>
             </div>
+
             <!-- Shortcut zu Einstellungen wenn kein Startkapital gesetzt -->
             <?php if ($starting_balance == 0): ?>
                 <div style="background-color: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; border-radius: 8px; padding: 15px; margin-top: 20px; text-align: center;">
                     <div style="color: #fcd34d; margin-bottom: 10px; font-weight: 600;">💡 Tipp: Startkapital festlegen</div>
                     <div style="color: var(--clr-surface-a50); font-size: 14px; margin-bottom: 15px;">
-                        Lege dein Startkapital fest, um dein echtes Gesamtvermögen zu sehen!
+                        Lege das gemeinsame Startkapital fest, um das echte Gesamtvermögen zu sehen!
                     </div>
                     <a href="settings.php" class="btn btn-small">⚙️ Startkapital festlegen</a>
                 </div>
             <?php endif; ?>
             </br>
+
             <!-- Dashboard Cards -->
             <div class="dashboard-cards">
                 <!-- Gesamtvermögen (Hauptkarte) -->
@@ -473,7 +480,7 @@ if (isset($_SESSION['success'])) {
                         <span>🏦</span>
                     </div>
                     <div class="card-value">€<?= number_format($total_wealth, 2, ',', '.') ?></div>
-                    <div class="wealth-subtitle">Startkapital + Einnahmen - Ausgaben</div>
+                    <div class="wealth-subtitle">Gemeinsames Startkapital + Einnahmen - Ausgaben</div>
 
                     <div class="wealth-breakdown">
                         <div class="breakdown-title">📋 Aufschlüsselung</div>

@@ -23,12 +23,12 @@ if (empty($income_id)) {
 }
 
 try {
-    // Prüfe ob Einnahme existiert und dem Benutzer gehört
+    // Prüfe ob Einnahme existiert und dem Benutzer gehört (FIXED: c.type statt t.type)
     $stmt = $pdo->prepare("
         SELECT t.*, c.name as category_name
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
-        WHERE t.id = ? AND t.user_id = ? AND t.type = 'income'
+        WHERE t.id = ? AND t.user_id = ? AND c.type = 'income'
     ");
     $stmt->execute([$income_id, $user_id]);
     $income = $stmt->fetch();
@@ -40,13 +40,13 @@ try {
     }
 
     // Einnahme löschen
-    $stmt = $pdo->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ? AND type = 'income'");
+    $stmt = $pdo->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?");
     $stmt->execute([$income_id, $user_id]);
 
     if ($stmt->rowCount() > 0) {
         $_SESSION['success'] = sprintf(
             'Einnahme "%s" (+€%s) erfolgreich gelöscht.',
-            htmlspecialchars($income['description'] ?: $income['category_name']),
+            htmlspecialchars($income['note'] ?: $income['category_name']),
             number_format($income['amount'], 2, ',', '.')
         );
     } else {

@@ -32,12 +32,12 @@ if (!$category) {
     exit;
 }
 
-// Statistiken zur Kategorie laden
+// Statistiken zur Kategorie laden (FIXED: date statt transaction_date)
 $stmt = $pdo->prepare("
     SELECT 
         COUNT(*) as transaction_count,
         COALESCE(SUM(amount), 0) as total_amount,
-        MAX(transaction_date) as last_used
+        MAX(date) as last_used
     FROM transactions 
     WHERE category_id = ? AND user_id = ?
 ");

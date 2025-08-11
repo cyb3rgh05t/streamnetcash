@@ -137,8 +137,8 @@ if (isset($_SESSION['success'])) {
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <h1 class="login-title">💰 Finance Tracker</h1>
-                <p class="login-subtitle">Verwalte deine Finanzen intelligent</p>
+                <h1 class="login-title">StreamNet Finance</h1>
+
             </div>
 
             <?php if ($error_message): ?>
@@ -199,7 +199,7 @@ if (isset($_SESSION['success'])) {
             </div>
 
             <div class="form-footer">
-                <p>© 2025 StreamNet Club Ca$h - Finanzverwaltung</p>
+                <p>© 2025 StreamNet Finance - Finanzverwaltung</p>
             </div>
         </div>
     </div>

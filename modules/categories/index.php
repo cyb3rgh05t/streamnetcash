@@ -67,259 +67,16 @@ if (isset($_SESSION['error'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kategorien - Finance Tracker</title>
+    <title>Kategorien - StreamNet Finance</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
-    <style>
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--clr-surface-a20);
-        }
-
-        .categories-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .category-section {
-            background-color: var(--clr-surface-a10);
-            border: 1px solid var(--clr-surface-a20);
-            border-radius: 12px;
-            padding: 25px;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--clr-surface-a20);
-        }
-
-        .section-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .section-title.income {
-            color: #4ade80;
-        }
-
-        .section-title.expense {
-            color: #f87171;
-        }
-
-        .section-stats {
-            font-size: 13px;
-            color: var(--clr-surface-a50);
-        }
-
-        .category-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .category-card {
-            display: grid;
-            grid-template-columns: 60px 1fr auto auto;
-            gap: 15px;
-            align-items: center;
-            padding: 15px;
-            background-color: var(--clr-surface-a20);
-            border: 1px solid var(--clr-surface-a30);
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .category-card:hover {
-            background-color: var(--clr-surface-a30);
-            transform: translateY(-1px);
-        }
-
-        .category-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: var(--clr-light-a0);
-        }
-
-        .category-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .category-name {
-            font-weight: 600;
-            color: var(--clr-light-a0);
-            font-size: 16px;
-        }
-
-        .category-usage {
-            font-size: 12px;
-            color: var(--clr-surface-a50);
-        }
-
-        .category-stats {
-            text-align: right;
-            font-size: 13px;
-        }
-
-        .stat-amount {
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .stat-amount.income {
-            color: #4ade80;
-        }
-
-        .stat-amount.expense {
-            color: #f87171;
-        }
-
-        .stat-count {
-            color: var(--clr-surface-a50);
-            font-size: 11px;
-        }
-
-        .category-actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        .btn-icon {
-            padding: 6px 8px;
-            font-size: 12px;
-            min-width: auto;
-        }
-
-        .btn-edit {
-            background-color: var(--clr-primary-a0);
-            color: var(--clr-dark-a0);
-        }
-
-        .btn-delete {
-            background-color: #f87171;
-            color: var(--clr-light-a0);
-        }
-
-        .btn-delete:hover {
-            background-color: #dc2626;
-        }
-
-        .btn-delete:disabled {
-            background-color: var(--clr-surface-a40);
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .empty-section {
-            text-align: center;
-            color: var(--clr-surface-a50);
-            padding: 40px 20px;
-        }
-
-        .empty-section h4 {
-            margin-bottom: 10px;
-            color: var(--clr-surface-a40);
-        }
-
-        .tips-section {
-            background-color: var(--clr-surface-tonal-a10);
-            border: 1px solid var(--clr-surface-tonal-a20);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 30px;
-        }
-
-        .tips-title {
-            color: var(--clr-primary-a20);
-            margin-bottom: 15px;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .tips-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }
-
-        .tip-item {
-            padding: 12px;
-            background-color: var(--clr-surface-a10);
-            border-radius: 6px;
-            font-size: 13px;
-            color: var(--clr-surface-a50);
-        }
-
-        .tip-icon {
-            margin-right: 8px;
-        }
-
-        .db-info {
-            background-color: var(--clr-surface-tonal-a10);
-            border: 1px solid var(--clr-primary-a0);
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 20px;
-            font-size: 12px;
-            color: var(--clr-primary-a20);
-        }
-
-        @media (max-width: 1024px) {
-            .categories-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-
-            .category-card {
-                grid-template-columns: 1fr;
-                gap: 10px;
-                text-align: center;
-            }
-
-            .category-stats {
-                text-align: center;
-            }
-
-            .category-actions {
-                justify-content: center;
-            }
-
-            .tips-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../../assets/css/categories.css">
 </head>
 
 <body>
     <div class="app-layout">
         <aside class="sidebar">
             <div style="padding: 20px; border-bottom: 1px solid var(--clr-surface-a20); margin-bottom: 20px;">
-                <h2 style="color: var(--clr-primary-a20);">💰 Finance Tracker</h2>
+                <h2 style="color: var(--clr-primary-a20);">StreamNet Finance</h2>
                 <p style="color: var(--clr-surface-a50); font-size: 14px;">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 
@@ -328,18 +85,18 @@ if (isset($_SESSION['error'])) {
                     <li><a href="../../dashboard.php">📊 Dashboard</a></li>
                     <li><a href="../expenses/index.php">💸 Ausgaben</a></li>
                     <li><a href="../income/index.php">💰 Einnahmen</a></li>
+                    <li><a href="../recurring/index.php">🔄 Wiederkehrend</a></li>
                     <li><a href="index.php" class="active">🏷️ Kategorien</a></li>
                     <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
-                        <a href="../../logout.php">🚪 Logout</a>
+                        <a href="../../settings.php">⚙️ Einstellungen</a>
                     </li>
+                    <li><a href="../../logout.php">🚪 Logout</a></li>
                 </ul>
             </nav>
         </aside>
 
         <main class="main-content">
-            <div class="db-info">
-                ✅ <strong>Verbesserte Database-Klasse aktiv</strong> - Neue Schema-Struktur mit optimierten JOINs, keine Type-Spalte in Transactions
-            </div>
+
 
             <div class="page-header">
                 <div>

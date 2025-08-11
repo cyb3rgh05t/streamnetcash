@@ -89,8 +89,26 @@ class Database
             note TEXT,
             date TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            recurring_transaction_id INTEGER DEFAULT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+            FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+            FOREIGN KEY (recurring_transaction_id) REFERENCES recurring_transactions(id) ON DELETE SET NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS recurring_transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            category_id INTEGER NOT NULL,
+            amount REAL NOT NULL,
+            note TEXT,
+            frequency TEXT NOT NULL CHECK (frequency IN ('daily','weekly','monthly','yearly')),
+            start_date TEXT NOT NULL,
+            end_date TEXT,
+            next_due_date TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
         );
         SQL;
 
@@ -98,6 +116,7 @@ class Database
         try {
             $pdo->exec($schemaSql);
             $this->migrateExistingUsers();
+            $this->migrateRecurringTransactions();
             $pdo->commit();
         } catch (Throwable $t) {
             $pdo->rollBack();
@@ -133,6 +152,37 @@ class Database
         } catch (PDOException $e) {
             // Spalte existiert bereits oder anderer Fehler - das ist okay
             error_log("Migration info: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Migration für wiederkehrende Transaktionen
+     */
+    private function migrateRecurringTransactions(): void
+    {
+        $pdo = $this->getConnection();
+
+        try {
+            // Prüfe ob recurring_transaction_id Spalte bereits existiert
+            $stmt = $pdo->prepare("PRAGMA table_info(transactions)");
+            $stmt->execute();
+            $columns = $stmt->fetchAll();
+
+            $hasRecurringId = false;
+            foreach ($columns as $column) {
+                if ($column['name'] === 'recurring_transaction_id') {
+                    $hasRecurringId = true;
+                    break;
+                }
+            }
+
+            // Füge Spalte hinzu wenn sie nicht existiert
+            if (!$hasRecurringId) {
+                $pdo->exec("ALTER TABLE transactions ADD COLUMN recurring_transaction_id INTEGER DEFAULT NULL");
+            }
+        } catch (PDOException $e) {
+            // Spalte existiert bereits oder anderer Fehler - das ist okay
+            error_log("Recurring migration info: " . $e->getMessage());
         }
     }
 
@@ -278,5 +328,163 @@ class Database
         $result = $stmt->fetchColumn();
 
         return $result !== false ? (float)$result : 0.00;
+    }
+
+    /**
+     * Process due recurring transactions
+     * Call this regularly (e.g., via cron job or on login)
+     *
+     * @param int|null $user_id Process only for specific user (optional)
+     * @return int Number of transactions created
+     */
+    public function processDueRecurringTransactions(?int $user_id = null): int
+    {
+        $pdo = $this->getConnection();
+        $today = date('Y-m-d');
+        $transactions_created = 0;
+
+        // Get all due recurring transactions
+        $sql = "
+            SELECT rt.*, c.type as transaction_type
+            FROM recurring_transactions rt
+            JOIN categories c ON rt.category_id = c.id
+            WHERE rt.is_active = 1 
+            AND rt.next_due_date <= ?
+            AND (rt.end_date IS NULL OR rt.end_date >= ?)
+        ";
+
+        $params = [$today, $today];
+
+        if ($user_id !== null) {
+            $sql .= " AND rt.user_id = ?";
+            $params[] = $user_id;
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $due_recurring = $stmt->fetchAll();
+
+        $pdo->beginTransaction();
+        try {
+            foreach ($due_recurring as $recurring) {
+                // Create transaction
+                $create_stmt = $pdo->prepare("
+                    INSERT INTO transactions (user_id, category_id, amount, note, date, recurring_transaction_id, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+                ");
+
+                $note = $recurring['note'] . ' (Wiederkehrend)';
+
+                $create_stmt->execute([
+                    $recurring['user_id'],
+                    $recurring['category_id'],
+                    $recurring['amount'],
+                    $note,
+                    $recurring['next_due_date'],
+                    $recurring['id']
+                ]);
+
+                // Calculate next due date
+                $next_due = $this->calculateNextDueDate($recurring['next_due_date'], $recurring['frequency']);
+
+                // Update recurring transaction
+                $update_stmt = $pdo->prepare("
+                    UPDATE recurring_transactions 
+                    SET next_due_date = ? 
+                    WHERE id = ?
+                ");
+                $update_stmt->execute([$next_due, $recurring['id']]);
+
+                $transactions_created++;
+            }
+
+            $pdo->commit();
+        } catch (Throwable $t) {
+            $pdo->rollBack();
+            throw $t;
+        }
+
+        return $transactions_created;
+    }
+
+    /**
+     * Calculate next due date based on frequency
+     *
+     * @param string $current_date
+     * @param string $frequency
+     * @return string Next due date
+     */
+    private function calculateNextDueDate(string $current_date, string $frequency): string
+    {
+        $date = new DateTime($current_date);
+
+        switch ($frequency) {
+            case 'daily':
+                $date->add(new DateInterval('P1D'));
+                break;
+            case 'weekly':
+                $date->add(new DateInterval('P7D'));
+                break;
+            case 'monthly':
+                $date->add(new DateInterval('P1M'));
+                break;
+            case 'yearly':
+                $date->add(new DateInterval('P1Y'));
+                break;
+        }
+
+        return $date->format('Y-m-d');
+    }
+
+    /**
+     * Get recurring transactions statistics for user
+     *
+     * @param int $user_id
+     * @return array Statistics
+     */
+    public function getRecurringStats(int $user_id): array
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare("
+            SELECT 
+                COUNT(*) as total,
+                COUNT(CASE WHEN is_active = 1 THEN 1 END) as active,
+                COUNT(CASE WHEN is_active = 1 AND next_due_date <= ? THEN 1 END) as due_soon,
+                COUNT(CASE WHEN is_active = 1 AND next_due_date < ? THEN 1 END) as overdue
+            FROM recurring_transactions 
+            WHERE user_id = ?
+        ");
+
+        $today = date('Y-m-d');
+        $soon = date('Y-m-d', strtotime('+7 days'));
+
+        $stmt->execute([$soon, $today, $user_id]);
+        return $stmt->fetch() ?: [];
+    }
+
+    /**
+     * Get due recurring transactions
+     *
+     * @param int $user_id
+     * @param int $days_ahead How many days ahead to check (default 3)
+     * @return array Recurring transactions
+     */
+    public function getDueRecurringTransactions(int $user_id, int $days_ahead = 3): array
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare("
+            SELECT rt.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
+            FROM recurring_transactions rt
+            JOIN categories c ON rt.category_id = c.id
+            WHERE rt.user_id = ? AND rt.is_active = 1 AND rt.next_due_date <= ?
+            ORDER BY rt.next_due_date ASC
+        ");
+
+        $due_date = date('Y-m-d', strtotime("+$days_ahead days"));
+        $stmt->execute([$user_id, $due_date]);
+
+        return $stmt->fetchAll();
     }
 }

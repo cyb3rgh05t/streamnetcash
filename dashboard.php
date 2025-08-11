@@ -13,6 +13,13 @@ $db = new Database();
 $pdo = $db->getConnection();
 $user_id = $_SESSION['user_id'];
 
+// Automatisch fällige wiederkehrende Transaktionen verarbeiten beim Login
+$processed_count = $db->processDueRecurringTransactions($user_id);
+
+if ($processed_count > 0) {
+    $_SESSION['success'] = "$processed_count wiederkehrende Transaktion(en) automatisch erstellt!";
+}
+
 // Dashboard-Statistiken laden
 $current_month = date('Y-m');
 
@@ -65,6 +72,30 @@ $balance = $total_income - $total_expenses;
 // Gesamtvermögen berechnen (Startkapital + alle Einnahmen - alle Ausgaben)
 $total_wealth = $starting_balance + $total_income_all_time - $total_expenses_all_time;
 
+// Wiederkehrende Transaktionen Statistiken
+$stmt = $pdo->prepare("
+    SELECT 
+        COUNT(*) as total_recurring,
+        COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_recurring,
+        COUNT(CASE WHEN is_active = 1 AND next_due_date <= ? THEN 1 END) as due_soon
+    FROM recurring_transactions 
+    WHERE user_id = ?
+");
+$stmt->execute([date('Y-m-d', strtotime('+7 days')), $user_id]);
+$recurring_stats = $stmt->fetch();
+
+// Fällige wiederkehrende Transaktionen für Warning
+$stmt = $pdo->prepare("
+    SELECT rt.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
+    FROM recurring_transactions rt
+    JOIN categories c ON rt.category_id = c.id
+    WHERE rt.user_id = ? AND rt.is_active = 1 AND rt.next_due_date <= ?
+    ORDER BY rt.next_due_date ASC
+    LIMIT 3
+");
+$stmt->execute([$user_id, date('Y-m-d', strtotime('+3 days'))]);
+$due_recurring = $stmt->fetchAll();
+
 // Letzte 5 Transaktionen
 $stmt = $pdo->prepare("
     SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
@@ -89,6 +120,13 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$current_month, $user_id]);
 $expense_categories = $stmt->fetchAll();
+
+// Success message anzeigen
+$message = '';
+if (isset($_SESSION['success'])) {
+    $message = '<div class="alert alert-success">' . htmlspecialchars($_SESSION['success']) . '</div>';
+    unset($_SESSION['success']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -96,7 +134,7 @@ $expense_categories = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Finance Tracker</title>
+    <title>Dashboard - StreamNet Finance</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
@@ -163,6 +201,15 @@ $expense_categories = $stmt->fetchAll();
             font-size: 12px;
             color: var(--clr-surface-a40);
             margin-top: 5px;
+        }
+
+        .card-recurring {
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            border: 2px solid #6b7280;
+        }
+
+        .card-recurring .card-value {
+            color: #a5b4fc;
         }
 
         .transaction-item {
@@ -276,6 +323,50 @@ $expense_categories = $stmt->fetchAll();
             font-weight: 500;
         }
 
+        .due-recurring-warning {
+            background-color: rgba(251, 191, 36, 0.1);
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .warning-title {
+            color: #fcd34d;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .warning-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .warning-icon {
+            font-size: 16px;
+        }
+
+        .warning-text {
+            color: var(--clr-surface-a50);
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background-color: rgba(74, 222, 128, 0.1);
+            border: 1px solid #4ade80;
+            color: #86efac;
+        }
+
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -303,7 +394,7 @@ $expense_categories = $stmt->fetchAll();
     <div class="app-layout">
         <aside class="sidebar">
             <div style="padding: 20px; border-bottom: 1px solid var(--clr-surface-a20); margin-bottom: 20px;">
-                <h2 style="color: var(--clr-primary-a20);">💰 Finance Tracker</h2>
+                <h2 style="color: var(--clr-primary-a20);">StreamNet Finance</h2>
                 <p style="color: var(--clr-surface-a50); font-size: 14px;">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 
@@ -312,6 +403,7 @@ $expense_categories = $stmt->fetchAll();
                     <li><a href="dashboard.php" class="active">📊 Dashboard</a></li>
                     <li><a href="modules/expenses/index.php">💸 Ausgaben</a></li>
                     <li><a href="modules/income/index.php">💰 Einnahmen</a></li>
+                    <li><a href="modules/recurring/index.php">🔄 Wiederkehrend</a></li>
                     <li><a href="modules/categories/index.php">🏷️ Kategorien</a></li>
                     <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
                         <a href="settings.php">⚙️ Einstellungen</a>
@@ -322,24 +414,55 @@ $expense_categories = $stmt->fetchAll();
         </aside>
 
         <main class="main-content">
-            <div class="db-info">
-                ✅ <strong>Verbesserte Database-Klasse aktiv</strong> - Neue Schema-Struktur mit Startkapital und Gesamtvermögen-Berechnung
-            </div>
+
+
+            <?= $message ?>
+
+            <!-- Warnung für fällige wiederkehrende Transaktionen -->
+            <?php if (!empty($due_recurring)): ?>
+                <div class="due-recurring-warning">
+                    <div class="warning-title">⚠️ Fällige wiederkehrende Transaktionen</div>
+                    <?php foreach ($due_recurring as $due): ?>
+                        <div class="warning-item">
+                            <span class="warning-icon"><?= htmlspecialchars($due['category_icon']) ?></span>
+                            <span class="warning-text">
+                                <strong><?= htmlspecialchars($due['note']) ?></strong>
+                                (<?= $due['transaction_type'] === 'income' ? '+' : '-' ?>€<?= number_format($due['amount'], 2, ',', '.') ?>)
+                                - Fällig am <?= date('d.m.Y', strtotime($due['next_due_date'])) ?>
+                            </span>
+                        </div>
+                    <?php endforeach; ?>
+                    <div style="margin-top: 10px;">
+                        <a href="modules/recurring/index.php" class="btn btn-small">🔄 Wiederkehrende Transaktionen verwalten</a>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <div class="dashboard-header">
                 <div class="welcome-text">
-                    <h1>Dashboard</h1>
+                    <h1>📊 Dashboard</h1>
                     <p>Überblick über deine Finanzen - <?= date('F Y') ?></p>
                 </div>
                 <div class="quick-actions">
                     <a href="modules/income/add.php" class="btn">+ Einnahme</a>
                     <a href="modules/expenses/add.php" class="btn btn-secondary">+ Ausgabe</a>
+                    <a href="modules/recurring/add.php" class="btn" style="background-color: #6b7280;">🔄 Wiederkehrend</a>
                 </div>
             </div>
-
+            <!-- Shortcut zu Einstellungen wenn kein Startkapital gesetzt -->
+            <?php if ($starting_balance == 0): ?>
+                <div style="background-color: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; border-radius: 8px; padding: 15px; margin-top: 20px; text-align: center;">
+                    <div style="color: #fcd34d; margin-bottom: 10px; font-weight: 600;">💡 Tipp: Startkapital festlegen</div>
+                    <div style="color: var(--clr-surface-a50); font-size: 14px; margin-bottom: 15px;">
+                        Lege dein Startkapital fest, um dein echtes Gesamtvermögen zu sehen!
+                    </div>
+                    <a href="settings.php" class="btn btn-small">⚙️ Startkapital festlegen</a>
+                </div>
+            <?php endif; ?>
+            </br>
             <!-- Dashboard Cards -->
             <div class="dashboard-cards">
-                <!-- Gesamtvermögen (Neue Hauptkarte) -->
+                <!-- Gesamtvermögen (Hauptkarte) -->
                 <div class="card card-wealth">
                     <div class="card-header">
                         <h3 class="card-title">Gesamtvermögen</h3>
@@ -363,6 +486,21 @@ $expense_categories = $stmt->fetchAll();
                             <span class="breakdown-value">€<?= number_format($total_expenses_all_time, 2, ',', '.') ?></span>
                         </div>
                     </div>
+                </div>
+
+                <!-- Wiederkehrende Transaktionen -->
+                <div class="card card-recurring">
+                    <div class="card-header">
+                        <h3 class="card-title">Wiederkehrende Transaktionen</h3>
+                        <span>🔄</span>
+                    </div>
+                    <div class="card-value"><?= $recurring_stats['active_recurring'] ?></div>
+                    <p style="color: var(--clr-surface-a50); font-size: 14px;">
+                        <?= $recurring_stats['active_recurring'] ?> aktiv von <?= $recurring_stats['total_recurring'] ?> gesamt
+                        <?php if ($recurring_stats['due_soon'] > 0): ?>
+                            <br><span style="color: #fbbf24; font-weight: 600;"><?= $recurring_stats['due_soon'] ?> bald fällig</span>
+                        <?php endif; ?>
+                    </p>
                 </div>
 
                 <div class="card card-income">
@@ -419,6 +557,9 @@ $expense_categories = $stmt->fetchAll();
                                 <div class="transaction-details">
                                     <div class="transaction-title">
                                         <?= htmlspecialchars($transaction['note']) ?: 'Keine Beschreibung' ?>
+                                        <?php if ($transaction['recurring_transaction_id']): ?>
+                                            <span style="color: #a5b4fc; font-size: 12px;">🔄</span>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="transaction-category">
                                         <?= htmlspecialchars($transaction['category_name']) ?>
@@ -460,16 +601,6 @@ $expense_categories = $stmt->fetchAll();
                 </div>
             </div>
 
-            <!-- Shortcut zu Einstellungen wenn kein Startkapital gesetzt -->
-            <?php if ($starting_balance == 0): ?>
-                <div style="background-color: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; border-radius: 8px; padding: 15px; margin-top: 20px; text-align: center;">
-                    <div style="color: #fcd34d; margin-bottom: 10px; font-weight: 600;">💡 Tipp: Startkapital festlegen</div>
-                    <div style="color: var(--clr-surface-a50); font-size: 14px; margin-bottom: 15px;">
-                        Lege dein Startkapital fest, um dein echtes Gesamtvermögen zu sehen!
-                    </div>
-                    <a href="settings.php" class="btn btn-small">⚙️ Startkapital festlegen</a>
-                </div>
-            <?php endif; ?>
         </main>
     </div>
 

@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Tracker</title>
+    <title>StreamNet Finance</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/components.css">
 </head>
@@ -20,7 +20,7 @@ if (!isset($_SESSION['user_id'])) {
     <div class="app-layout">
         <aside class="sidebar">
             <div style="padding: 20px; border-bottom: 1px solid var(--clr-surface-a20); margin-bottom: 20px;">
-                <h2 style="color: var(--clr-primary-a20);">💰 Finance Tracker</h2>
+                <h2 style="color: var(--clr-primary-a20);">StreamNet Finance</h2>
                 <p style="color: var(--clr-surface-a50); font-size: 14px;">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 

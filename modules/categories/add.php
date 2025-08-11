@@ -171,275 +171,16 @@ $form_data = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neue Kategorie - Finance Tracker</title>
+    <title>Neue Kategorie - StreamNet Finance</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
-    <style>
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--clr-surface-a20);
-        }
-
-        .form-container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .form-card {
-            background-color: var(--clr-surface-a10);
-            border: 1px solid var(--clr-surface-a20);
-            border-radius: 12px;
-            padding: 30px;
-        }
-
-        .form-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .form-header h2 {
-            color: var(--clr-primary-a20);
-            margin-bottom: 8px;
-        }
-
-        .form-header p {
-            color: var(--clr-surface-a50);
-            font-size: 14px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-grid .form-group:first-child {
-            grid-column: 1 / -1;
-        }
-
-        .type-selector {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .type-option {
-            position: relative;
-        }
-
-        .type-radio {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .type-label {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px;
-            background-color: var(--clr-surface-a20);
-            border: 2px solid var(--clr-surface-a20);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-        }
-
-        .type-radio:checked+.type-label {
-            border-color: var(--clr-primary-a0);
-            background-color: var(--clr-surface-tonal-a10);
-        }
-
-        .type-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .type-name {
-            font-weight: 500;
-            color: var(--clr-light-a0);
-        }
-
-        .icon-selector {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-            gap: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            padding: 10px;
-            background-color: var(--clr-surface-a20);
-            border-radius: 8px;
-            border: 1px solid var(--clr-surface-a30);
-        }
-
-        .icon-option {
-            position: relative;
-        }
-
-        .icon-radio {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .icon-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 45px;
-            height: 45px;
-            background-color: var(--clr-surface-a30);
-            border: 2px solid var(--clr-surface-a30);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 20px;
-        }
-
-        .icon-radio:checked+.icon-label {
-            border-color: var(--clr-primary-a0);
-            background-color: var(--clr-primary-a0);
-            transform: scale(1.1);
-        }
-
-        .color-selector {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-            gap: 8px;
-        }
-
-        .color-option {
-            position: relative;
-        }
-
-        .color-radio {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .color-label {
-            display: block;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 3px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .color-radio:checked+.color-label {
-            border-color: var(--clr-light-a0);
-            transform: scale(1.2);
-            box-shadow: 0 0 0 2px var(--clr-surface-a0);
-        }
-
-        .preview-section {
-            background-color: var(--clr-surface-tonal-a10);
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .preview-title {
-            color: var(--clr-primary-a20);
-            margin-bottom: 15px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .category-preview {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 20px;
-            background-color: var(--clr-surface-a10);
-            border-radius: 25px;
-            border: 1px solid var(--clr-surface-a20);
-        }
-
-        .preview-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: var(--clr-light-a0);
-        }
-
-        .preview-name {
-            font-weight: 500;
-            color: var(--clr-light-a0);
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--clr-surface-a20);
-        }
-
-        .btn-cancel {
-            background-color: var(--clr-surface-a30);
-            color: var(--clr-light-a0);
-        }
-
-        .btn-cancel:hover {
-            background-color: var(--clr-surface-a40);
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .alert-error {
-            background-color: rgba(248, 113, 113, 0.1);
-            border: 1px solid #f87171;
-            color: #fca5a5;
-        }
-
-        @media (max-width: 768px) {
-            .form-container {
-                margin: 0;
-            }
-
-            .form-card {
-                padding: 20px;
-            }
-
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
-
-            .icon-selector {
-                grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../../assets/css/categories.css">
 </head>
 
 <body>
     <div class="app-layout">
         <aside class="sidebar">
             <div style="padding: 20px; border-bottom: 1px solid var(--clr-surface-a20); margin-bottom: 20px;">
-                <h2 style="color: var(--clr-primary-a20);">💰 Finance Tracker</h2>
+                <h2 style="color: var(--clr-primary-a20);">StreamNet Finance</h2>
                 <p style="color: var(--clr-surface-a50); font-size: 14px;">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 
@@ -448,10 +189,12 @@ $form_data = [
                     <li><a href="../../dashboard.php">📊 Dashboard</a></li>
                     <li><a href="../expenses/index.php">💸 Ausgaben</a></li>
                     <li><a href="../income/index.php">💰 Einnahmen</a></li>
+                    <li><a href="../recurring/index.php">🔄 Wiederkehrend</a></li>
                     <li><a href="index.php" class="active">🏷️ Kategorien</a></li>
                     <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
-                        <a href="../../logout.php">🚪 Logout</a>
+                        <a href="../../settings.php">⚙️ Einstellungen</a>
                     </li>
+                    <li><a href="../../logout.php">🚪 Logout</a></li>
                 </ul>
             </nav>
         </aside>

@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Einstellungen - Finance Tracker</title>
+    <title>Einstellungen - StreamNet Finance</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <style>
         .page-header {
@@ -294,7 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="app-layout">
         <aside class="sidebar">
             <div style="padding: 20px; border-bottom: 1px solid var(--clr-surface-a20); margin-bottom: 20px;">
-                <h2 style="color: var(--clr-primary-a20);">💰 Finance Tracker</h2>
+                <h2 style="color: var(--clr-primary-a20);">StreamNet Finance</h2>
                 <p style="color: var(--clr-surface-a50); font-size: 14px;">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 
@@ -303,6 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li><a href="dashboard.php">📊 Dashboard</a></li>
                     <li><a href="modules/expenses/index.php">💸 Ausgaben</a></li>
                     <li><a href="modules/income/index.php">💰 Einnahmen</a></li>
+                    <li><a href="modules/recurring/index.php">🔄 Wiederkehrend</a></li>
                     <li><a href="modules/categories/index.php">🏷️ Kategorien</a></li>
                     <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
                         <a href="settings.php" class="active">⚙️ Einstellungen</a>

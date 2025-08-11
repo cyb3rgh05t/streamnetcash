@@ -120,198 +120,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ausgabe bearbeiten - Finance Tracker</title>
+    <title>Ausgabe bearbeiten - StreamNet Finance</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
-    <style>
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--clr-surface-a20);
-        }
+    <link rel="stylesheet" href="../../assets/css/expenses.css">
 
-        .form-container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .form-card {
-            background-color: var(--clr-surface-a10);
-            border: 1px solid var(--clr-surface-a20);
-            border-radius: 12px;
-            padding: 30px;
-        }
-
-        .form-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .form-header h2 {
-            color: var(--clr-primary-a20);
-            margin-bottom: 8px;
-        }
-
-        .form-header p {
-            color: var(--clr-surface-a50);
-            font-size: 14px;
-        }
-
-        .current-info {
-            background-color: var(--clr-surface-tonal-a10);
-            border-left: 4px solid var(--clr-primary-a0);
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 25px;
-        }
-
-        .current-info h4 {
-            color: var(--clr-primary-a20);
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .current-info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            font-size: 13px;
-        }
-
-        .current-info-item {
-            color: var(--clr-surface-a50);
-        }
-
-        .current-info-value {
-            color: var(--clr-light-a0);
-            font-weight: 500;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-grid .form-group:first-child {
-            grid-column: 1 / -1;
-        }
-
-        .amount-input-wrapper {
-            position: relative;
-        }
-
-        .currency-symbol {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--clr-primary-a20);
-            font-weight: 600;
-            pointer-events: none;
-        }
-
-        .amount-input {
-            padding-left: 30px;
-        }
-
-        .category-preview {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 8px;
-            padding: 8px 12px;
-            background-color: var(--clr-surface-a20);
-            border-radius: 6px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .category-preview.visible {
-            opacity: 1;
-        }
-
-        .category-icon {
-            font-size: 20px;
-        }
-
-        .category-name {
-            font-weight: 500;
-            color: var(--clr-light-a0);
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--clr-surface-a20);
-        }
-
-        .btn-cancel {
-            background-color: var(--clr-surface-a30);
-            color: var(--clr-light-a0);
-        }
-
-        .btn-cancel:hover {
-            background-color: var(--clr-surface-a40);
-        }
-
-        .btn-delete {
-            background-color: #f87171;
-            color: var(--clr-light-a0);
-        }
-
-        .btn-delete:hover {
-            background-color: #dc2626;
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .alert-error {
-            background-color: rgba(248, 113, 113, 0.1);
-            border: 1px solid #f87171;
-            color: #fca5a5;
-        }
-
-        @media (max-width: 768px) {
-            .form-container {
-                margin: 0;
-            }
-
-            .form-card {
-                padding: 20px;
-            }
-
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
-
-            .current-info-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
 </head>
 
 <body>
     <div class="app-layout">
         <aside class="sidebar">
             <div style="padding: 20px; border-bottom: 1px solid var(--clr-surface-a20); margin-bottom: 20px;">
-                <h2 style="color: var(--clr-primary-a20);">💰 Finance Tracker</h2>
+                <h2 style="color: var(--clr-primary-a20);">StreamNet Finance</h2>
                 <p style="color: var(--clr-surface-a50); font-size: 14px;">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 
@@ -320,10 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li><a href="../../dashboard.php">📊 Dashboard</a></li>
                     <li><a href="index.php" class="active">💸 Ausgaben</a></li>
                     <li><a href="../income/index.php">💰 Einnahmen</a></li>
+                    <li><a href="../recurring/index.php">🔄 Wiederkehrend</a></li>
                     <li><a href="../categories/index.php">🏷️ Kategorien</a></li>
                     <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
-                        <a href="../../logout.php">🚪 Logout</a>
+                        <a href="../../settings.php">⚙️ Einstellungen</a>
                     </li>
+                    <li><a href="../../logout.php">🚪 Logout</a></li>
                 </ul>
             </nav>
         </aside>

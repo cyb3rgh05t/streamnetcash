@@ -33,6 +33,22 @@ CREATE TABLE IF NOT EXISTS transactions (
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS investments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    symbol TEXT NOT NULL,
+    name TEXT NOT NULL,
+    amount REAL NOT NULL,
+    purchase_price REAL NOT NULL,
+    purchase_date TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Index für bessere Performance
+CREATE INDEX IF NOT EXISTS idx_investments_user_id ON investments(user_id);
+CREATE INDEX IF NOT EXISTS idx_investments_symbol ON investments(symbol);
+
 -- Standard-Kategorien einfügen (aktualisierte Struktur)
 INSERT OR IGNORE INTO categories (id, user_id, name, type, color, icon) VALUES 
 (1, 1, 'Gehalt', 'income', '#4ade80', '💼'),

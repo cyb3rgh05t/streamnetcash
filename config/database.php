@@ -231,6 +231,7 @@ class Database
         }
     }
 
+
     /**
      * Creates a new user account with hashed password
      *

@@ -66,11 +66,20 @@ $stmt = $pdo->prepare("
 $stmt->execute([]);
 $total_expenses_all_time = $stmt->fetchColumn();
 
+// Investment-Werte laden
+$investment_stats = $db->getTotalInvestmentValue($user_id);
+$total_investment_value = $investment_stats['total_current_value'];
+
 // Saldo berechnen (nur aktueller Monat)
 $balance = $total_income - $total_expenses;
 
-// Gesamtvermögen berechnen (Startkapital + alle Einnahmen - alle Ausgaben)
+// Gesamtvermögen berechnen (Startkapital + alle Einnahmen - alle Ausgaben + Investments)
 $total_wealth = $starting_balance + $total_income_all_time - $total_expenses_all_time;
+$total_wealth_with_investments = $total_wealth + $total_investment_value;
+
+// Investments laden für Anzeige
+$investments = $db->getInvestmentsWithCurrentValue($user_id);
+$top_investments = array_slice($investments, 0, 5); // Top 5 für Dashboard
 
 // FIXED: Wiederkehrende Transaktionen Statistiken - user_id Filter entfernt
 $stmt = $pdo->prepare("
@@ -201,6 +210,17 @@ if (isset($_SESSION['success'])) {
             margin-top: 5px;
         }
 
+        .card-investment {
+            background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+            border: 2px solid #10b981;
+        }
+
+        .card-investment .card-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: <?= $investment_stats['total_profit_loss'] >= 0 ? '#4ade80' : '#f87171' ?>;
+        }
+
         .card-recurring {
             background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
             border: 2px solid #6b7280;
@@ -218,6 +238,17 @@ if (isset($_SESSION['success'])) {
         }
 
         .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .investment-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--clr-surface-a20);
+        }
+
+        .investment-item:last-child {
             border-bottom: none;
         }
 
@@ -395,6 +426,12 @@ if (isset($_SESSION['success'])) {
             .dashboard-cards {
                 grid-template-columns: 1fr;
             }
+
+            .investment-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
         }
     </style>
 </head>
@@ -415,6 +452,7 @@ if (isset($_SESSION['success'])) {
                     <li><a href="modules/expenses/index.php">💸 Ausgaben</a></li>
                     <li><a href="modules/income/index.php">💰 Einnahmen</a></li>
                     <li><a href="modules/recurring/index.php">🔄 Wiederkehrend</a></li>
+                    <li><a href="modules/investments/index.php">📈 Investments</a></li>
                     <li><a href="modules/categories/index.php">🏷️ Kategorien</a></li>
                     <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
                         <a href="settings.php">⚙️ Einstellungen</a>
@@ -455,6 +493,7 @@ if (isset($_SESSION['success'])) {
                 <div class="quick-actions">
                     <a href="modules/income/add.php" class="btn">+ Einnahme</a>
                     <a href="modules/expenses/add.php" class="btn btn-secondary">+ Ausgabe</a>
+                    <a href="modules/investments/add.php" class="btn" style="background-color: #10b981;">📈 Investment</a>
                     <a href="modules/recurring/add.php" class="btn" style="background-color: #6b7280;">🔄 Wiederkehrend</a>
                 </div>
             </div>
@@ -479,8 +518,8 @@ if (isset($_SESSION['success'])) {
                         <h3 class="card-title">Gesamtvermögen</h3>
                         <span>🏦</span>
                     </div>
-                    <div class="card-value">€<?= number_format($total_wealth, 2, ',', '.') ?></div>
-                    <div class="wealth-subtitle">Gemeinsames Startkapital + Einnahmen - Ausgaben</div>
+                    <div class="card-value">€<?= number_format($total_wealth_with_investments, 2, ',', '.') ?></div>
+                    <div class="wealth-subtitle">Startkapital + Einnahmen - Ausgaben + Investments</div>
 
                     <div class="wealth-breakdown">
                         <div class="breakdown-title">📋 Aufschlüsselung</div>
@@ -496,7 +535,32 @@ if (isset($_SESSION['success'])) {
                             <span>- Gesamt Ausgaben:</span>
                             <span class="breakdown-value">€<?= number_format($total_expenses_all_time, 2, ',', '.') ?></span>
                         </div>
+                        <?php if ($total_investment_value > 0): ?>
+                            <div class="breakdown-item">
+                                <span>+ Investments:</span>
+                                <span class="breakdown-value">€<?= number_format($total_investment_value, 2, ',', '.') ?></span>
+                            </div>
+                        <?php endif; ?>
                     </div>
+                </div>
+
+                <!-- Investment Card -->
+                <div class="card card-investment">
+                    <div class="card-header">
+                        <h3 class="card-title">Investments</h3>
+                        <span>📈</span>
+                    </div>
+                    <div class="card-value">
+                        €<?= number_format($total_investment_value, 2, ',', '.') ?>
+                    </div>
+                    <?php if ($investment_stats['investment_count'] > 0): ?>
+                        <p style="color: var(--clr-surface-a50); font-size: 14px;">
+                            <?= $investment_stats['investment_count'] ?> Positionen
+                            • <?= $investment_stats['total_profit_loss'] >= 0 ? '+' : '' ?><?= number_format($investment_stats['total_profit_loss_percent'], 1, ',', '.') ?>%
+                        </p>
+                    <?php else: ?>
+                        <p style="color: var(--clr-surface-a50); font-size: 14px;">Noch keine Investments</p>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Wiederkehrende Transaktionen -->
@@ -547,9 +611,12 @@ if (isset($_SESSION['success'])) {
             <!-- Statistics Section -->
             <div class="stats-grid">
                 <div class="card">
-                    <h3 style="margin-bottom: 20px; color: var(--clr-primary-a20);">
-                        📋 Letzte Transaktionen
-                    </h3>
+                    <div class="card-header">
+                        <h3 style="color: var(--clr-primary-a20);">📋 Letzte Transaktionen</h3>
+                        <a href="modules/expenses/index.php" style="color: var(--clr-primary-a20); text-decoration: none; font-size: 14px;">
+                            Alle anzeigen →
+                        </a>
+                    </div>
 
                     <?php if (empty($recent_transactions)): ?>
                         <div class="no-data">
@@ -586,29 +653,63 @@ if (isset($_SESSION['success'])) {
                                 </div>
                             </div>
                         <?php endforeach; ?>
-
-                        <div style="text-align: center; margin-top: 15px;">
-                            <a href="modules/expenses/index.php" style="color: var(--clr-primary-a20); text-decoration: none; font-size: 14px;">
-                                Alle Transaktionen anzeigen →
-                            </a>
-                        </div>
                     <?php endif; ?>
                 </div>
 
-                <div class="card">
-                    <h3 style="margin-bottom: 20px; color: var(--clr-primary-a20);">
-                        📊 Ausgaben nach Kategorie
-                    </h3>
+                <div>
+                    <!-- Top Investments -->
+                    <?php if (!empty($investments)): ?>
+                        <div class="card" style="margin-bottom: 20px;">
+                            <div class="card-header">
+                                <h3 style="color: var(--clr-primary-a20);">📈 Top Investments</h3>
+                                <a href="modules/investments/index.php" style="color: var(--clr-primary-a20); text-decoration: none; font-size: 14px;">
+                                    Alle anzeigen →
+                                </a>
+                            </div>
 
-                    <?php if (empty($expense_categories)): ?>
-                        <div class="no-data">
-                            <p>Noch keine Ausgaben in diesem Monat.</p>
-                        </div>
-                    <?php else: ?>
-                        <div class="chart-container">
-                            <canvas id="categoryChart"></canvas>
+                            <?php foreach ($top_investments as $investment): ?>
+                                <div class="investment-item">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 500; color: var(--clr-light-a0); margin-bottom: 2px;">
+                                            <?= htmlspecialchars(strtoupper($investment['symbol'])) ?>
+                                        </div>
+                                        <div style="font-size: 12px; color: var(--clr-surface-a50);">
+                                            <?= number_format($investment['amount'], 6, ',', '.') ?> • €<?= number_format($investment['current_price'], 2, ',', '.') ?>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-weight: 600; color: var(--clr-primary-a20); margin-bottom: 2px;">
+                                            €<?= number_format($investment['current_value'], 2, ',', '.') ?>
+                                        </div>
+                                        <div style="font-size: 12px; color: <?= $investment['profit_loss'] >= 0 ? '#4ade80' : '#f87171' ?>;">
+                                            <?= $investment['profit_loss'] >= 0 ? '+' : '' ?><?= number_format($investment['profit_loss_percent'], 1, ',', '.') ?>%
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+
+                            <div style="text-align: center; margin-top: 15px;">
+                                <a href="modules/investments/add.php" class="btn btn-small">+ Investment hinzufügen</a>
+                            </div>
                         </div>
                     <?php endif; ?>
+
+                    <!-- Chart -->
+                    <div class="card">
+                        <h3 style="margin-bottom: 20px; color: var(--clr-primary-a20);">
+                            📊 Ausgaben nach Kategorie
+                        </h3>
+
+                        <?php if (empty($expense_categories)): ?>
+                            <div class="no-data">
+                                <p>Noch keine Ausgaben in diesem Monat.</p>
+                            </div>
+                        <?php else: ?>
+                            <div class="chart-container">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
 

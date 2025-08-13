@@ -81,7 +81,7 @@
   background-color: var(--clr-surface-tonal-a10);
   padding: 15px 20px;
   display: grid;
-  grid-template-columns: 60px 1fr 120px 120px 120px 100px 100px 80px;
+  grid-template-columns: 60px 1fr 200px 200px 200px 200px 120px 110px;
   gap: 15px;
   align-items: center;
   font-weight: 600;
@@ -92,7 +92,7 @@
 .recurring-row {
   padding: 15px 20px;
   display: grid;
-  grid-template-columns: 60px 1fr 120px 120px 120px 100px 100px 80px;
+  grid-template-columns: 60px 1fr 200px 200px 200px 200px 120px 110px;
   gap: 15px;
   align-items: center;
   border-bottom: 1px solid var(--clr-surface-a20);
@@ -112,7 +112,7 @@
 }
 
 .category-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
@@ -132,6 +132,7 @@
 
 .amount.expense {
   color: #f87171;
+  text-align: start;
 }
 
 .frequency-badge {

@@ -59,7 +59,7 @@
   background-color: var(--clr-surface-tonal-a10);
   padding: 15px 20px;
   display: grid;
-  grid-template-columns: 150px 100px 100px 100px 100px 120px 140px 80px 80px;
+  grid-template-columns: 200px 150px 150px 150px 150px 150px 200px 225px 80px;
   gap: 15px;
   align-items: center;
   font-weight: 600;
@@ -70,7 +70,7 @@
 .investment-row {
   padding: 15px 20px;
   display: grid;
-  grid-template-columns: 150px 100px 100px 100px 100px 120px 140px 80px 80px;
+  grid-template-columns: 200px 150px 150px 150px 150px 150px 75px 350px 80px;
   gap: 15px;
   align-items: center;
   border-bottom: 1px solid var(--clr-surface-a20);
@@ -105,18 +105,18 @@
 .investment-amount {
   font-weight: 500;
   color: var(--clr-light-a0);
-  text-align: right;
+  text-align: left;
 }
 
 .price {
   font-weight: 500;
   color: var(--clr-light-a0);
-  text-align: right;
+  text-align: start;
 }
 
 .value {
   font-weight: 600;
-  text-align: right;
+  text-align: start;
 }
 
 .value.invested {
@@ -128,7 +128,7 @@
 }
 
 .profit-loss {
-  text-align: right;
+  text-align: start;
 }
 
 .profit-loss .amount {
@@ -152,8 +152,7 @@
   font-weight: 500;
   text-align: center;
   padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 20px;
 }
 
 .price-change.positive {
@@ -404,5 +403,119 @@
 
   .form-actions {
     flex-direction: column;
+  }
+}
+
+.search-result-item {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--clr-surface-a20);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.search-result-item:hover {
+  background-color: var(--clr-surface-a20);
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-main {
+  flex: 1;
+}
+
+.search-result-symbol {
+  font-weight: 600;
+  color: var(--clr-primary-a20);
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.search-result-name {
+  color: var(--clr-surface-a50);
+  font-size: 12px;
+}
+
+.rank-badge {
+  background-color: var(--clr-primary-a0);
+  color: var(--clr-dark-a0);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.search-loading {
+  padding: 15px;
+  text-align: center;
+  color: var(--clr-surface-a50);
+  font-size: 14px;
+}
+
+.search-no-results {
+  padding: 15px;
+  text-align: center;
+  color: var(--clr-surface-a40);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.search-error {
+  padding: 12px;
+  background-color: rgba(248, 113, 113, 0.1);
+  border: 1px solid #f87171;
+  color: #fca5a5;
+  font-size: 13px;
+  margin: 8px;
+  border-radius: 6px;
+}
+
+.search-info {
+  padding: 8px 12px;
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid #3b82f6;
+  color: #93c5fd;
+  font-size: 12px;
+  margin: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Animation für Search Results */
+.search-results {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .search-result-item {
+    padding: 10px;
+  }
+
+  .search-result-symbol {
+    font-size: 13px;
+  }
+
+  .search-result-name {
+    font-size: 11px;
+  }
+
+  .rank-badge {
+    font-size: 9px;
+    padding: 1px 4px;
   }
 }

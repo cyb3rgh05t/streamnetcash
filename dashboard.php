@@ -129,14 +129,22 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - StreamNet Finance</title>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+        integrity="sha512-..."
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="assets/css/style.css">
 
     <style>
         .dashboard-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--clr-surface-a20);
             flex-wrap: wrap;
             gap: 20px;
         }
@@ -556,16 +564,20 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
 
             <nav>
                 <ul class="sidebar-nav">
-                    <li><a href="dashboard.php" class="active">📊 Dashboard</a></li>
-                    <li><a href="modules/expenses/index.php">💸 Ausgaben</a></li>
-                    <li><a href="modules/income/index.php">💰 Einnahmen</a></li>
-                    <li><a href="modules/recurring/index.php">🔄 Wiederkehrend</a></li>
-                    <li><a href="modules/investments/index.php">📈 Investments</a></li>
-                    <li><a href="modules/categories/index.php">🏷️ Kategorien</a></li>
-                    <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
-                        <a href="settings.php">⚙️ Einstellungen</a>
+                    <li><a href="dashboard.php" class="active"><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</a></li>
+                    <li><a href="modules/expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
+                    <li><a href="modules/income/index.php"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahmen</a></li>
+                    <li><a href="modules/recurring/index.php"><i class="fas fa-sync"></i>&nbsp;&nbsp;Wiederkehrend</a></li>
+                    <li><a href="modules/investments/index.php"><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto</a></li>
+                    <li><a href="modules/categories/index.php"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp;Kategorien</a></li>
+                    <li>
+                        <a style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;" href="settings.php">
+                            <i class="fa-solid fa-gear"></i>&nbsp;&nbsp;Einstellungen
+                        </a>
                     </li>
-                    <li><a href="logout.php">🚪 Logout</a></li>
+                    <li>
+                        <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i>&nbsp;&nbsp;Logout</a>
+                    </li>
                 </ul>
             </nav>
         </aside>
@@ -578,7 +590,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
             <?php endif; ?>
 
             <!-- Info für fällige wiederkehrende Transaktionen -->
-            <?php if (!empty($due_recurring)): ?>
+            <!-- <?php if (!empty($due_recurring)): ?>
                 <div class="shared-notice">
                     <div class="shared-notice-title">🔄 Fällige wiederkehrende Transaktionen</div>
                     <div class="shared-notice-text">
@@ -595,18 +607,18 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                         </div>
                     </div>
                 </div>
-            <?php endif; ?>
+            <?php endif; ?> -->
 
             <div class="dashboard-header">
                 <div class="welcome-text">
-                    <h1>📊 Dashboard</h1>
+                    <h1><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</h1>
                     <p>Gemeinsamer Überblick über die Finanzen - <?= date('F Y') ?></p>
                 </div>
                 <div class="quick-actions">
                     <a href="modules/income/add.php" class="btn">+ Einnahme</a>
                     <a href="modules/expenses/add.php" class="btn btn-secondary">+ Ausgabe</a>
-                    <a href="modules/investments/add.php" class="btn" style="background-color: #10b981;">📈 Investment</a>
-                    <a href="modules/recurring/add.php" class="btn" style="background-color: #6b7280;">🔄 Wiederkehrend</a>
+                    <a href="modules/investments/add.php" class="btn" style="background-color: #10b981;">+ Investment</a>
+                    <a href="modules/recurring/add.php" class="btn" style="background-color: #6b7280;">+ Wiederkehrend</a>
                 </div>
             </div>
 
@@ -626,7 +638,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 <div class="wealth-card">
                     <div class="wealth-card-header">
                         <div class="wealth-title">
-                            🏦 Gesamtvermögen
+                            <i class="fa-solid fa-globe"></i>&nbsp;&nbsp;Gesamtvermögen
                         </div>
                     </div>
 
@@ -634,7 +646,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                     <div class="wealth-subtitle">Startkapital + Einnahmen - Ausgaben + Investments</div>
 
                     <div class="wealth-breakdown">
-                        <div class="breakdown-title">📋 Aufschlüsselung</div>
+                        <div class="breakdown-title"><i class="fa-solid fa-eye"></i> Aufschlüsselung</div>
                         <div class="breakdown-item">
                             <span>Startkapital:</span>
                             <span class="breakdown-value">€<?= number_format($starting_balance, 2, ',', '.') ?></span>
@@ -663,7 +675,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 <div class="card card-investment">
                     <div class="card-header">
                         <h3 class="card-title">Investments</h3>
-                        <span>📈</span>
+                        <span><i class="fa-brands fa-btc"></i></span>
                     </div>
                     <?php if ($total_investment_value !== null): ?>
                         <div class="card-value">€<?= formatNumber($total_investment_value) ?></div>
@@ -689,7 +701,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 <div class="card card-recurring">
                     <div class="card-header">
                         <h3 class="card-title">Wiederkehrende Transaktionen</h3>
-                        <span>🔄</span>
+                        <span><i class="fas fa-sync"></i></span>
                     </div>
                     <div class="card-value"><?= $recurring_stats['active_recurring'] ?></div>
                     <p style="color: var(--clr-surface-a50); font-size: 14px;">
@@ -704,9 +716,9 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 <div class="card card-income">
                     <div class="card-header">
                         <h3 class="card-title">Einnahmen</h3>
-                        <span>💰</span>
+                        <span><i class="fa-solid fa-sack-dollar"></i></span>
                     </div>
-                    <div class="card-value">€<?= number_format($total_income, 2, ',', '.') ?></div>
+                    <div class="card-value">+ €<?= number_format($total_income, 2, ',', '.') ?></div>
                     <p style="color: var(--clr-surface-a50); font-size: 14px;">Diesen Monat</p>
                 </div>
 
@@ -714,9 +726,9 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 <div class="card card-expense">
                     <div class="card-header">
                         <h3 class="card-title">Ausgaben</h3>
-                        <span>💸</span>
+                        <span><i class="fa-solid fa-money-bill-wave"></i></span>
                     </div>
-                    <div class="card-value">€<?= number_format($total_expenses, 2, ',', '.') ?></div>
+                    <div class="card-value">- €<?= number_format($total_expenses, 2, ',', '.') ?></div>
                     <p style="color: var(--clr-surface-a50); font-size: 14px;">Diesen Monat</p>
                 </div>
 
@@ -724,7 +736,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Monatssaldo</h3>
-                        <span>📊</span>
+                        <span><i class="fa-solid fa-money-check-dollar"></i></span>
                     </div>
                     <div class="card-value" style="color: <?= $balance >= 0 ? '#4ade80' : '#f87171' ?>">
                         €<?= number_format($balance, 2, ',', '.') ?>
@@ -737,7 +749,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
             <div class="stats-grid">
                 <div class="card">
                     <div class="card-header">
-                        <h3 style="color: var(--clr-primary-a20);">📋 Letzte Transaktionen</h3>
+                        <h3 style="color: var(--clr-primary-a20);"><i class="fa-solid fa-eye"></i> Letzte Transaktionen</h3>
                         <a href="modules/expenses/index.php" style="color: var(--clr-primary-a20); text-decoration: none; font-size: 14px;">
                             Alle anzeigen →
                         </a>
@@ -777,7 +789,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 <?php if (!empty($top_investments)): ?>
                     <div class="card">
                         <div class="card-header">
-                            <h3 style="color: var(--clr-primary-a20);">📈 Top Investments</h3>
+                            <h3 style="color: var(--clr-primary-a20);"><i class="fa-brands fa-btc"></i> Top Investments</h3>
                             <a href="modules/investments/index.php" style="color: var(--clr-primary-a20); text-decoration: none; font-size: 14px;">
                                 Alle anzeigen →
                             </a>

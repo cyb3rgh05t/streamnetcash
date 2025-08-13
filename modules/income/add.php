@@ -97,6 +97,12 @@ $form_data = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neue Einnahme - StreamNet Finance</title>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+        integrity="sha512-..."
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/income.css">
 </head>
@@ -114,15 +120,19 @@ $form_data = [
 
             <nav>
                 <ul class="sidebar-nav">
-                    <li><a href="../../dashboard.php">📊 Dashboard</a></li>
-                    <li><a href="../expenses/index.php">💸 Ausgaben</a></li>
-                    <li><a href="index.php" class="active">💰 Einnahmen</a></li>
-                    <li><a href="../recurring/index.php">🔄 Wiederkehrend</a></li>
-                    <li><a href="../categories/index.php">🏷️ Kategorien</a></li>
-                    <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
-                        <a href="../../settings.php">⚙️ Einstellungen</a>
+                    <li><a href="../../dashboard.php"><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</a></li>
+                    <li><a href="../expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
+                    <li><a href="../income/index.php"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahmen</a></li>
+                    <li><a href="../recurring/index.php"><i class="fas fa-sync"></i>&nbsp;&nbsp;Wiederkehrend</a></li>
+                    <li><a href="../investments/index.php"><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto</a></li>
+                    <li><a href="../categories/index.php"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp;Kategorien</a></li>
+                    <li>
+                        <a style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;" href="../../settings.php">
+                            <i class="fa-solid fa-gear"></i>&nbsp;&nbsp;Einstellungen
+                        </a>
+                    <li>
+                        <a href="../../logout.php"><i class="fa-solid fa-right-from-bracket"></i>&nbsp;&nbsp;Logout</a>
                     </li>
-                    <li><a href="../../logout.php">🚪 Logout</a></li>
                 </ul>
             </nav>
         </aside>
@@ -130,7 +140,7 @@ $form_data = [
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 style="color: #4ade80; margin-bottom: 5px;">💰 Neue Einnahme</h1>
+                    <h1 style="color: #4ade80; margin-bottom: 5px;"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Neue Einnahme</h1>
                     <p style="color: var(--clr-surface-a50);">Füge eine neue Einnahme zur gemeinsamen Datenbank hinzu</p>
                 </div>
                 <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
@@ -139,7 +149,7 @@ $form_data = [
             <div class="form-container">
                 <div class="form-card">
                     <div class="form-header">
-                        <h2>💰 Einnahme hinzufügen</h2>
+                        <h2><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahme hinzufügen</h2>
                         <p>Erfasse alle Details deiner Einnahme - wird für alle User sichtbar</p>
                     </div>
 

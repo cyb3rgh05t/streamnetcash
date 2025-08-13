@@ -76,6 +76,12 @@ if (isset($_SESSION['error'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ausgaben - StreamNet Finance</title>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+        integrity="sha512-..."
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/expenses.css">
 
@@ -87,22 +93,26 @@ if (isset($_SESSION['error'])) {
             <div class="sidebar-header">
                 <a class="sidebar-logo">
                     <img src="../../assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
+
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 
             <nav>
                 <ul class="sidebar-nav">
-                    <li><a href="../../dashboard.php">📊 Dashboard</a></li>
-                    <li><a href="index.php" class="active">💸 Ausgaben</a></li>
-                    <li><a href="../income/index.php">💰 Einnahmen</a></li>
-                    <li><a href="../recurring/index.php">🔄 Wiederkehrend</a></li>
-                    <li><a href="modules/investments/index.php">📈 Investments</a></li>
-                    <li><a href="../categories/index.php">🏷️ Kategorien</a></li>
-                    <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
-                        <a href="../../settings.php">⚙️ Einstellungen</a>
+                    <li><a href="../../dashboard.php"><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</a></li>
+                    <li><a href="../expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
+                    <li><a href="../income/index.php"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahmen</a></li>
+                    <li><a href="../recurring/index.php"><i class="fas fa-sync"></i>&nbsp;&nbsp;Wiederkehrend</a></li>
+                    <li><a href="../investments/index.php"><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto</a></li>
+                    <li><a href="../categories/index.php"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp;Kategorien</a></li>
+                    <li>
+                        <a style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;" href="../../settings.php">
+                            <i class="fa-solid fa-gear"></i>&nbsp;&nbsp;Einstellungen
+                        </a>
+                    <li>
+                        <a href="../../logout.php"><i class="fa-solid fa-right-from-bracket"></i>&nbsp;&nbsp;Logout</a>
                     </li>
-                    <li><a href="../../logout.php">🚪 Logout</a></li>
                 </ul>
             </nav>
         </aside>
@@ -110,13 +120,35 @@ if (isset($_SESSION['error'])) {
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">💸 Ausgaben</h1>
-                    <p style="color: var(--clr-surface-a50);">Verwalte deine Ausgaben und behalte den Überblick - Gemeinsame Ansicht aller User</p>
+                    <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</h1>
+                    <p style="color: var(--clr-surface-a50);">Verwalte deine Ausgaben und verfolge deine Kosten</p>
                 </div>
                 <a href="add.php" class="btn">+ Neue Ausgabe</a>
             </div>
 
             <?= $message ?>
+
+            <!-- Quick Stats -->
+            <?php if (!empty($expenses)): ?>
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-value">€<?= number_format($total_filtered, 2, ',', '.') ?></div>
+                        <div class="stat-label">Gefilterte Summe</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><?= count($expenses) ?></div>
+                        <div class="stat-label">Ausgaben gefunden</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">€<?= count($expenses) > 0 ? number_format($total_filtered / count($expenses), 2, ',', '.') : '0,00' ?></div>
+                        <div class="stat-label">Durchschnitt</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><?= date('F Y', strtotime($selected_month . '-01')) ?></div>
+                        <div class="stat-label">Zeitraum</div>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <!-- Filter Section -->
             <form method="GET" class="filters">
@@ -147,14 +179,6 @@ if (isset($_SESSION['error'])) {
                     <button type="submit" class="btn">🔍 Filtern</button>
                 </div>
             </form>
-
-            <!-- Summary -->
-            <?php if (!empty($expenses)): ?>
-                <div class="expenses-summary">
-                    <div class="expenses-total">€<?= number_format($total_filtered, 2, ',', '.') ?></div>
-                    <div class="expenses-count"><?= count($expenses) ?> Ausgabe(n) gefunden</div>
-                </div>
-            <?php endif; ?>
 
             <!-- Expenses Table -->
             <div class="expenses-table">
@@ -191,7 +215,7 @@ if (isset($_SESSION['error'])) {
                             </div>
 
                             <div class="expense-amount">
-                                €<?= number_format($expense['amount'], 2, ',', '.') ?>
+                                - €<?= number_format($expense['amount'], 2, ',', '.') ?>
                             </div>
 
                             <div class="expense-date">
@@ -199,9 +223,9 @@ if (isset($_SESSION['error'])) {
                             </div>
 
                             <div class="actions">
-                                <a href="edit.php?id=<?= $expense['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
+                                <a href="edit.php?id=<?= $expense['id'] ?>" class="btn btn-icon btn-edit">✏️</a>
                                 <a href="delete.php?id=<?= $expense['id'] ?>" class="btn btn-icon btn-delete"
-                                    onclick="return confirm('Ausgabe wirklich löschen?')" title="Löschen">🗑️</a>
+                                    onclick="return confirm('Möchtest du diese Ausgabe wirklich löschen?')">🗑️</a>
                             </div>
                         </div>
                     <?php endforeach; ?>

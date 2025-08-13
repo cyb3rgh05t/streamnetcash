@@ -87,6 +87,12 @@ $form_data = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neues Investment - StreamNet Finance</title>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+        integrity="sha512-..."
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/investments.css">
 </head>
@@ -103,16 +109,19 @@ $form_data = [
 
             <nav>
                 <ul class="sidebar-nav">
-                    <li><a href="../../dashboard.php">📊 Dashboard</a></li>
-                    <li><a href="../expenses/index.php">💸 Ausgaben</a></li>
-                    <li><a href="../income/index.php">💰 Einnahmen</a></li>
-                    <li><a href="../recurring/index.php">🔄 Wiederkehrend</a></li>
-                    <li><a href="index.php" class="active">📈 Investments</a></li>
-                    <li><a href="../categories/index.php">🏷️ Kategorien</a></li>
-                    <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
-                        <a href="../../settings.php">⚙️ Einstellungen</a>
+                    <li><a href="../../dashboard.php"><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</a></li>
+                    <li><a href="../expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
+                    <li><a href="../income/index.php"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahmen</a></li>
+                    <li><a href="../recurring/index.php"><i class="fas fa-sync"></i>&nbsp;&nbsp;Wiederkehrend</a></li>
+                    <li><a href="index.php" class="active"><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto</a></li>
+                    <li><a href="../categories/index.php"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp;Kategorien</a></li>
+                    <li>
+                        <a style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;" href="../../settings.php">
+                            <i class="fa-solid fa-gear"></i>&nbsp;&nbsp;Einstellungen
+                        </a>
+                    <li>
+                        <a href="../../logout.php"><i class="fa-solid fa-right-from-bracket"></i>&nbsp;&nbsp;Logout</a>
                     </li>
-                    <li><a href="../../logout.php">🚪 Logout</a></li>
                 </ul>
             </nav>
         </aside>
@@ -120,7 +129,7 @@ $form_data = [
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">📈 Neues Investment</h1>
+                    <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;"><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto - Neues Investment</h1>
                     <p style="color: var(--clr-surface-a50);">Füge ein neues Kryptowährung-Investment hinzu</p>
                 </div>
                 <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
@@ -129,7 +138,7 @@ $form_data = [
             <div class="form-container">
                 <div class="form-card">
                     <div class="form-header">
-                        <h2>📈 Investment hinzufügen</h2>
+                        <h2><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto - Investment hinzufügen</h2>
                         <p>Erfasse die Details deines Krypto-Investments - wird für alle User sichtbar</p>
                     </div>
 
@@ -225,118 +234,127 @@ $form_data = [
 
     <script>
         let searchTimeout;
+        let currentRequest = null;
 
         function searchCrypto(query) {
             clearTimeout(searchTimeout);
 
             const resultsDiv = document.getElementById('searchResults');
 
+            // Cancel previous request if still pending
+            if (currentRequest) {
+                currentRequest.abort();
+                currentRequest = null;
+            }
+
             if (query.length < 2) {
                 resultsDiv.style.display = 'none';
                 return;
             }
 
+            // Show loading indicator
+            resultsDiv.innerHTML = '<div class="search-loading">🔍 Suche läuft...</div>';
+            resultsDiv.style.display = 'block';
+
             searchTimeout = setTimeout(() => {
-                // Simuliere API-Suche (in echter Anwendung würde hier AJAX-Call stattfinden)
-                const popularCryptos = [{
-                        symbol: 'BTC',
-                        name: 'Bitcoin',
-                        id: 'bitcoin'
-                    },
-                    {
-                        symbol: 'ETH',
-                        name: 'Ethereum',
-                        id: 'ethereum'
-                    },
-                    {
-                        symbol: 'XRP',
-                        name: 'Ripple',
-                        id: 'ripple'
-                    },
-                    {
-                        symbol: 'ADA',
-                        name: 'Cardano',
-                        id: 'cardano'
-                    },
-                    {
-                        symbol: 'DOGE',
-                        name: 'Dogecoin',
-                        id: 'dogecoin'
-                    },
-                    {
-                        symbol: 'DOT',
-                        name: 'Polkadot',
-                        id: 'polkadot'
-                    },
-                    {
-                        symbol: 'LINK',
-                        name: 'Chainlink',
-                        id: 'chainlink'
-                    },
-                    {
-                        symbol: 'LTC',
-                        name: 'Litecoin',
-                        id: 'litecoin'
-                    },
-                    {
-                        symbol: 'BCH',
-                        name: 'Bitcoin Cash',
-                        id: 'bitcoin-cash'
-                    },
-                    {
-                        symbol: 'XLM',
-                        name: 'Stellar',
-                        id: 'stellar'
-                    },
-                    {
-                        symbol: 'USDT',
-                        name: 'Tether',
-                        id: 'tether'
-                    },
-                    {
-                        symbol: 'USDC',
-                        name: 'USD Coin',
-                        id: 'usd-coin'
-                    },
-                    {
-                        symbol: 'BNB',
-                        name: 'Binance Coin',
-                        id: 'binancecoin'
-                    }
-                ];
-
-                const filteredCryptos = popularCryptos.filter(crypto =>
-                    crypto.symbol.toLowerCase().includes(query.toLowerCase()) ||
-                    crypto.name.toLowerCase().includes(query.toLowerCase())
-                );
-
-                displaySearchResults(filteredCryptos);
+                performSearch(query);
             }, 300);
         }
 
-        function displaySearchResults(cryptos) {
+        async function performSearch(query) {
+            try {
+                // Create new AbortController for this request
+                const controller = new AbortController();
+                currentRequest = controller;
+
+                const response = await fetch('crypto_search.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        limit: 15
+                    }),
+                    signal: controller.signal
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                currentRequest = null;
+
+                if (data.error) {
+                    displayError(data.error, data.fallback_used);
+                    return;
+                }
+
+                displaySearchResults(data.results, data.api_available);
+
+            } catch (error) {
+                currentRequest = null;
+
+                if (error.name === 'AbortError') {
+                    // Request was cancelled, ignore
+                    return;
+                }
+
+                console.error('Search error:', error);
+                displayError('Suche fehlgeschlagen. Bitte versuche es erneut.');
+            }
+        }
+
+        function displaySearchResults(cryptos, apiAvailable = true) {
             const resultsDiv = document.getElementById('searchResults');
 
-            if (cryptos.length === 0) {
-                resultsDiv.style.display = 'none';
+            if (!cryptos || cryptos.length === 0) {
+                resultsDiv.innerHTML = '<div class="search-no-results">Keine Kryptowährungen gefunden</div>';
+                resultsDiv.style.display = 'block';
                 return;
             }
 
             let html = '';
+
+            // Show API status if not available
+            if (!apiAvailable) {
+                html += '<div class="search-info">⚠️ Offline-Modus: Begrenzte Ergebnisse</div>';
+            }
+
             cryptos.forEach(crypto => {
+                const rankBadge = crypto.rank && crypto.rank < 100 ?
+                    `<span class="rank-badge">#${crypto.rank}</span>` : '';
+
                 html += `
-                    <div class="search-result-item" onclick="selectCrypto('${crypto.symbol}', '${crypto.name}')">
-                        <div class="search-result-symbol">${crypto.symbol}</div>
-                        <div class="search-result-name">${crypto.name}</div>
-                    </div>
-                `;
+            <div class="search-result-item" onclick="selectCrypto('${crypto.symbol}', '${crypto.name}', '${crypto.id}')">
+                <div class="search-result-main">
+                    <div class="search-result-symbol">${crypto.symbol}</div>
+                    <div class="search-result-name">${crypto.name}</div>
+                </div>
+                ${rankBadge}
+            </div>
+        `;
             });
 
             resultsDiv.innerHTML = html;
             resultsDiv.style.display = 'block';
         }
 
-        function selectCrypto(symbol, name) {
+        function displayError(errorMessage, fallbackUsed = false) {
+            const resultsDiv = document.getElementById('searchResults');
+
+            let html = `<div class="search-error">❌ ${errorMessage}</div>`;
+
+            if (fallbackUsed) {
+                html += '<div class="search-info">💡 Versuche bekannte Symbole wie BTC, ETH, XRP</div>';
+            }
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+        }
+
+        function selectCrypto(symbol, name, id) {
             document.getElementById('symbol').value = symbol;
             document.getElementById('name').value = name;
             document.getElementById('crypto_search').value = `${symbol} - ${name}`;
@@ -357,6 +375,12 @@ $form_data = [
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 document.getElementById('searchResults').style.display = 'none';
+
+                // Cancel current search request
+                if (currentRequest) {
+                    currentRequest.abort();
+                    currentRequest = null;
+                }
             }
         });
 

@@ -110,6 +110,22 @@ class Database
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS investments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            symbol TEXT NOT NULL,
+            name TEXT NOT NULL,
+            amount REAL NOT NULL,
+            purchase_price REAL NOT NULL,
+            purchase_date TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        -- Index für bessere Performance
+        CREATE INDEX IF NOT EXISTS idx_investments_user_id ON investments(user_id);
+        CREATE INDEX IF NOT EXISTS idx_investments_symbol ON investments(symbol);
         SQL;
 
         $pdo->beginTransaction();
@@ -231,7 +247,6 @@ class Database
         }
     }
 
-
     /**
      * Creates a new user account with hashed password
      *
@@ -310,7 +325,7 @@ class Database
         // FIXED: Immer den ersten User updaten (gemeinsames Startkapital)
         $stmt = $pdo->prepare('
             UPDATE users 
-            SET starting_balance = ? 
+            SET starting_balance = ?
             WHERE id = (SELECT MIN(id) FROM users)
         ');
 
@@ -490,5 +505,272 @@ class Database
         $stmt->execute([$due_date]);
 
         return $stmt->fetchAll();
+    }
+
+    // ========================================
+    // INVESTMENT METHODS (NEU HINZUGEFÜGT)
+    // ========================================
+
+    /**
+     * Add new investment
+     *
+     * @param int $user_id
+     * @param string $symbol
+     * @param string $name
+     * @param float $amount
+     * @param float $purchase_price
+     * @param string $purchase_date
+     * @return int Investment ID
+     */
+    public function addInvestment(int $user_id, string $symbol, string $name, float $amount, float $purchase_price, string $purchase_date): int
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('
+            INSERT INTO investments (user_id, symbol, name, amount, purchase_price, purchase_date)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ');
+
+        $stmt->execute([$user_id, $symbol, $name, $amount, $purchase_price, $purchase_date]);
+        return (int)$pdo->lastInsertId();
+    }
+
+    /**
+     * Get all investments with current values (only real data)
+     *
+     * @param int $user_id
+     * @return array Array of investments with current market data or error info
+     */
+    public function getInvestmentsWithCurrentValue(int $user_id): array
+    {
+        $pdo = $this->getConnection();
+
+        // Get all investments from database (shared across all users for viewing)
+        $stmt = $pdo->prepare('
+            SELECT * FROM investments 
+            ORDER BY created_at DESC
+        ');
+        $stmt->execute();
+        $investments = $stmt->fetchAll();
+
+        if (empty($investments)) {
+            return [];
+        }
+
+        // Get current prices from CryptoAPI
+        require_once __DIR__ . '/crypto_api.php';
+        $crypto_api = new CryptoAPI();
+
+        // Collect all unique symbols
+        $symbols = array_unique(array_column($investments, 'symbol'));
+        $current_prices = $crypto_api->getCurrentPrices($symbols);
+
+        // Check if API call failed
+        $api_error = false;
+        if ($current_prices === false) {
+            $api_error = $crypto_api->getLastError();
+        }
+
+        // Process each investment
+        foreach ($investments as &$investment) {
+            $symbol = strtolower($investment['symbol']);
+            $converted_symbol = $crypto_api->convertSymbolToId($investment['symbol']);
+
+            // Calculate values
+            $purchase_value = $investment['amount'] * $investment['purchase_price'];
+
+            if ($api_error) {
+                // API failed - mark as unavailable
+                $investment['current_price'] = null;
+                $investment['purchase_value'] = $purchase_value;
+                $investment['current_value'] = null;
+                $investment['profit_loss'] = null;
+                $investment['profit_loss_percent'] = null;
+                $investment['price_change_24h'] = null;
+                $investment['api_error'] = $api_error;
+                $investment['data_status'] = 'api_unavailable';
+            } else {
+                // API worked - use real data
+                $current_price = $current_prices[$converted_symbol] ?? null;
+                $price_change_24h = $current_prices[$converted_symbol . '_change'] ?? null;
+
+                if ($current_price === null) {
+                    // Symbol not found in API response
+                    $investment['current_price'] = null;
+                    $investment['purchase_value'] = $purchase_value;
+                    $investment['current_value'] = null;
+                    $investment['profit_loss'] = null;
+                    $investment['profit_loss_percent'] = null;
+                    $investment['price_change_24h'] = null;
+                    $investment['api_error'] = "Symbol '{$investment['symbol']}' nicht in API gefunden";
+                    $investment['data_status'] = 'symbol_not_found';
+                } else {
+                    // All good - real current data
+                    $current_value = $investment['amount'] * $current_price;
+                    $profit_loss = $current_value - $purchase_value;
+                    $profit_loss_percent = $purchase_value > 0 ? (($profit_loss / $purchase_value) * 100) : 0;
+
+                    $investment['current_price'] = $current_price;
+                    $investment['purchase_value'] = $purchase_value;
+                    $investment['current_value'] = $current_value;
+                    $investment['profit_loss'] = $profit_loss;
+                    $investment['profit_loss_percent'] = $profit_loss_percent;
+                    $investment['price_change_24h'] = $price_change_24h;
+                    $investment['api_error'] = null;
+                    $investment['data_status'] = 'current';
+                }
+            }
+        }
+
+        return $investments;
+    }
+
+
+    /**
+     * Get total investment value statistics (only real data)
+     *
+     * @param int $user_id
+     * @return array Array with total values and statistics or error info
+     */
+    public function getTotalInvestmentValue(int $user_id): array
+    {
+        $investments = $this->getInvestmentsWithCurrentValue($user_id);
+
+        if (empty($investments)) {
+            return [
+                'investment_count' => 0,
+                'total_purchase_value' => 0.00,
+                'total_current_value' => 0.00,
+                'total_profit_loss' => 0.00,
+                'total_profit_loss_percent' => 0.00,
+                'data_status' => 'no_investments',
+                'api_error' => null
+            ];
+        }
+
+        // Check if we have any API errors
+        $has_api_errors = false;
+        $error_count = 0;
+        $working_investments = [];
+
+        foreach ($investments as $investment) {
+            if ($investment['data_status'] === 'current') {
+                $working_investments[] = $investment;
+            } else {
+                $has_api_errors = true;
+                $error_count++;
+            }
+        }
+
+        // Calculate totals only from working investments
+        $total_purchase_value = 0;
+        $total_current_value = 0;
+
+        foreach ($investments as $investment) {
+            $total_purchase_value += $investment['purchase_value'];
+
+            if ($investment['current_value'] !== null) {
+                $total_current_value += $investment['current_value'];
+            } else {
+                // For broken investments, we can't calculate current value
+                $total_current_value = null;
+                break;
+            }
+        }
+
+        // Calculate profit/loss only if we have current values
+        if ($total_current_value !== null) {
+            $total_profit_loss = $total_current_value - $total_purchase_value;
+            $total_profit_loss_percent = $total_purchase_value > 0 ? (($total_profit_loss / $total_purchase_value) * 100) : 0;
+            $data_status = $has_api_errors ? 'partial_data' : 'current';
+        } else {
+            $total_profit_loss = null;
+            $total_profit_loss_percent = null;
+            $data_status = 'api_unavailable';
+        }
+
+        return [
+            'investment_count' => count($investments),
+            'total_purchase_value' => $total_purchase_value,
+            'total_current_value' => $total_current_value,
+            'total_profit_loss' => $total_profit_loss,
+            'total_profit_loss_percent' => $total_profit_loss_percent,
+            'data_status' => $data_status,
+            'error_count' => $error_count,
+            'working_count' => count($working_investments),
+            'api_error' => $has_api_errors ? 'Einige Preise konnten nicht abgerufen werden' : null
+        ];
+    }
+
+    /**
+     * Get single investment by ID
+     *
+     * @param int $investment_id
+     * @return array|false Investment data or false if not found
+     */
+    public function getInvestmentById(int $investment_id)
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('SELECT * FROM investments WHERE id = ?');
+        $stmt->execute([$investment_id]);
+
+        return $stmt->fetch() ?: false;
+    }
+
+    /**
+     * Update existing investment
+     *
+     * @param int $investment_id
+     * @param string $symbol
+     * @param string $name
+     * @param float $amount
+     * @param float $purchase_price
+     * @param string $purchase_date
+     * @return bool Success
+     */
+    public function updateInvestment(int $investment_id, string $symbol, string $name, float $amount, float $purchase_price, string $purchase_date): bool
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('
+            UPDATE investments 
+            SET symbol = ?, name = ?, amount = ?, purchase_price = ?, purchase_date = ?
+            WHERE id = ?
+        ');
+
+        return $stmt->execute([$symbol, $name, $amount, $purchase_price, $purchase_date, $investment_id]);
+    }
+
+    /**
+     * Delete investment by ID
+     *
+     * @param int $investment_id
+     * @return bool Success
+     */
+    public function deleteInvestment(int $investment_id): bool
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('DELETE FROM investments WHERE id = ?');
+        return $stmt->execute([$investment_id]);
+    }
+
+    /**
+     * Check if investment belongs to user (for security)
+     *
+     * @param int $investment_id
+     * @param int $user_id
+     * @return bool
+     */
+    public function isInvestmentOwner(int $investment_id, int $user_id): bool
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('SELECT user_id FROM investments WHERE id = ?');
+        $stmt->execute([$investment_id]);
+        $result = $stmt->fetchColumn();
+
+        return $result !== false && (int)$result === $user_id;
     }
 }

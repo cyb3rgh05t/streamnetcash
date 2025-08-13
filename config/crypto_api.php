@@ -1,11 +1,12 @@
 <?php
-// config/crypto_api.php
+// config/crypto_api.php - Funktionierende Version für echte Live-Preise
 
 class CryptoAPI
 {
     private $base_url = 'https://api.coingecko.com/api/v3';
     private $cache_file = 'cache/crypto_prices.json';
     private $cache_duration = 300; // 5 Minuten Cache
+    private $last_error = '';
 
     public function __construct()
     {
@@ -18,102 +19,87 @@ class CryptoAPI
 
     /**
      * Get current price for multiple cryptocurrencies
-     * @param array $symbols Array of symbols like ['bitcoin', 'ripple', 'ethereum']
-     * @return array
+     * @param array $symbols Array of symbols like ['BTC', 'ETH', 'XRP']
+     * @return array|false Returns price data or false if API unavailable
      */
     public function getCurrentPrices($symbols)
     {
+        if (empty($symbols)) {
+            return false;
+        }
+
         $cache_key = 'prices_' . md5(implode(',', $symbols));
 
-        // Prüfe Cache
+        // Prüfe Cache zuerst
         $cached_data = $this->getFromCache($cache_key);
         if ($cached_data !== false) {
             return $cached_data;
         }
 
-        try {
-            $symbols_string = implode(',', $symbols);
-            $url = "{$this->base_url}/simple/price?ids={$symbols_string}&vs_currencies=eur&include_24hr_change=true";
+        // Konvertiere Symbole zu CoinGecko IDs
+        $converted_symbols = array_map([$this, 'convertSymbolToId'], $symbols);
+        $symbols_string = implode(',', $converted_symbols);
 
-            $response = $this->makeRequest($url);
+        $url = "{$this->base_url}/simple/price?ids={$symbols_string}&vs_currencies=eur&include_24hr_change=true";
 
-            if ($response) {
-                $this->saveToCache($cache_key, $response);
-                return $response;
-            }
-        } catch (Exception $e) {
-            error_log("Crypto API Error: " . $e->getMessage());
+        $response = $this->makeRequest($url);
+
+        if ($response === false) {
+            $this->last_error = 'Crypto-Preise konnten nicht abgerufen werden. API nicht erreichbar.';
+            return false;
         }
 
-        return [];
+        // Format response for easier access
+        $formatted_response = [];
+        foreach ($response as $id => $data) {
+            if (isset($data['eur'])) {
+                $formatted_response[$id] = $data['eur'];
+                $formatted_response[$id . '_change'] = $data['eur_24h_change'] ?? 0;
+            }
+        }
+
+        if (empty($formatted_response)) {
+            $this->last_error = 'Keine gültigen Preisdaten erhalten.';
+            return false;
+        }
+
+        $this->saveToCache($cache_key, $formatted_response);
+        return $formatted_response;
     }
 
     /**
      * Get single cryptocurrency current price
-     * @param string $symbol Like 'bitcoin', 'ripple'
-     * @return array|false
+     * @param string $symbol Like 'BTC', 'ETH'
+     * @return float|false Current price or false if not available
      */
     public function getCurrentPrice($symbol)
     {
         $prices = $this->getCurrentPrices([$symbol]);
-        return isset($prices[$symbol]) ? $prices[$symbol] : false;
+        if ($prices === false) {
+            return false;
+        }
+
+        $converted_symbol = $this->convertSymbolToId($symbol);
+        return $prices[$converted_symbol] ?? false;
     }
 
     /**
-     * Search for cryptocurrency by name or symbol
-     * @param string $query
-     * @return array
+     * Get last error message
+     * @return string
      */
-    public function searchCrypto($query)
+    public function getLastError()
     {
-        $cache_key = 'search_' . md5($query);
-
-        $cached_data = $this->getFromCache($cache_key);
-        if ($cached_data !== false) {
-            return $cached_data;
-        }
-
-        try {
-            $url = "{$this->base_url}/search?query=" . urlencode($query);
-            $response = $this->makeRequest($url);
-
-            if ($response && isset($response['coins'])) {
-                $this->saveToCache($cache_key, $response['coins'], 3600); // 1 Stunde Cache
-                return $response['coins'];
-            }
-        } catch (Exception $e) {
-            error_log("Crypto Search Error: " . $e->getMessage());
-        }
-
-        return [];
+        return $this->last_error;
     }
 
     /**
-     * Get list of supported cryptocurrencies
-     * @return array
+     * Check if API is currently available
+     * @return bool
      */
-    public function getSupportedCryptos()
+    public function isApiAvailable()
     {
-        $cache_key = 'supported_cryptos';
-
-        $cached_data = $this->getFromCache($cache_key, 86400); // 24 Stunden Cache
-        if ($cached_data !== false) {
-            return $cached_data;
-        }
-
-        try {
-            $url = "{$this->base_url}/coins/list";
-            $response = $this->makeRequest($url);
-
-            if ($response) {
-                $this->saveToCache($cache_key, $response, 86400);
-                return $response;
-            }
-        } catch (Exception $e) {
-            error_log("Crypto List Error: " . $e->getMessage());
-        }
-
-        return [];
+        $test_response = $this->makeRequest($this->base_url . '/simple/price?ids=bitcoin&vs_currencies=eur');
+        return $test_response !== false;
     }
 
     /**
@@ -136,33 +122,63 @@ class CryptoAPI
             'XLM' => 'stellar',
             'USDT' => 'tether',
             'USDC' => 'usd-coin',
-            'BNB' => 'binancecoin'
+            'BNB' => 'binancecoin',
+            'SOL' => 'solana',
+            'MATIC' => 'matic-network',
+            'AVAX' => 'avalanche-2',
+            'TRX' => 'tron'
         ];
 
         return $symbol_map[strtoupper($symbol)] ?? strtolower($symbol);
     }
 
     /**
-     * Make HTTP request to API
+     * Make HTTP request to API using cURL
      * @param string $url
      * @return array|false
      */
     private function makeRequest($url)
     {
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => 10,
-                'user_agent' => 'StreamNet Finance/1.0'
-            ]
+        $this->last_error = '';
+
+        $ch = curl_init();
+
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_USERAGENT => 'StreamNet Finance/1.0',
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 3,
+            CURLOPT_SSL_VERIFYPEER => false, // Für lokale Entwicklung
+            CURLOPT_SSL_VERIFYHOST => false  // Für lokale Entwicklung
         ]);
 
-        $response = file_get_contents($url, false, $context);
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
 
-        if ($response === false) {
+        curl_close($ch);
+
+        if ($response === false || !empty($error)) {
+            $this->last_error = "cURL Fehler: " . $error;
             return false;
         }
 
-        return json_decode($response, true);
+        if ($http_code !== 200) {
+            $this->last_error = "HTTP Fehler: $http_code";
+            return false;
+        }
+
+        $data = json_decode($response, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->last_error = "JSON Fehler: " . json_last_error_msg();
+            return false;
+        }
+
+        return $data;
     }
 
     /**
@@ -180,7 +196,7 @@ class CryptoAPI
             return false;
         }
 
-        $cache_data = json_decode(file_get_contents($cache_file), true);
+        $cache_data = @json_decode(file_get_contents($cache_file), true);
         if (!$cache_data) {
             return false;
         }
@@ -208,7 +224,7 @@ class CryptoAPI
 
         $cache_data = [];
         if (file_exists($cache_file)) {
-            $cache_data = json_decode(file_get_contents($cache_file), true) ?: [];
+            $cache_data = @json_decode(file_get_contents($cache_file), true) ?: [];
         }
 
         $cache_data[$key] = [
@@ -221,6 +237,6 @@ class CryptoAPI
             return time() - $item['timestamp'] < 86400;
         });
 
-        file_put_contents($cache_file, json_encode($cache_data));
+        @file_put_contents($cache_file, json_encode($cache_data));
     }
 }

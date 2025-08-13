@@ -97,6 +97,7 @@ if (isset($_SESSION['error'])) {
                     <li><a href="../expenses/index.php">💸 Ausgaben</a></li>
                     <li><a href="index.php" class="active">💰 Einnahmen</a></li>
                     <li><a href="../recurring/index.php">🔄 Wiederkehrend</a></li>
+                    <li><a href="modules/investments/index.php">📈 Investments</a></li>
                     <li><a href="../categories/index.php">🏷️ Kategorien</a></li>
                     <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
                         <a href="../../settings.php">⚙️ Einstellungen</a>

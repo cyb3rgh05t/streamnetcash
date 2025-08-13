@@ -43,12 +43,12 @@ $predefined_icons = [
     '🔧',
     '🧽',
     '🎓',
-    '🐕',
+    '🍕',
     '🌟',
     '💳',
     '📊',
     '🎯',
-    '🍔',
+    '📁',
     '☕'
 ];
 
@@ -99,7 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Name darf maximal 50 Zeichen lang sein.';
         }
 
-        if (empty($type) || !in_array($type, ['income', 'expense'])) {
+        // UPDATED: Schulden-Typen hinzugefügt
+        if (empty($type) || !in_array($type, ['income', 'expense', 'debt_in', 'debt_out'])) {
             $errors[] = 'Bitte wähle einen gültigen Typ aus.';
         }
 
@@ -188,7 +189,6 @@ $form_data = [
             <div class="sidebar-header">
                 <a class="sidebar-logo">
                     <img src="../../assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                    <h2 class="sidebar-logo-text">StreamNet Finance</h2>
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
@@ -198,6 +198,7 @@ $form_data = [
                     <li><a href="../../dashboard.php"><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</a></li>
                     <li><a href="../expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
                     <li><a href="../income/index.php"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahmen</a></li>
+                    <li><a href="../debts/index.php"><i class="fa-solid fa-handshake"></i>&nbsp;&nbsp;Schulden</a></li>
                     <li><a href="../recurring/index.php"><i class="fas fa-sync"></i>&nbsp;&nbsp;Wiederkehrend</a></li>
                     <li><a href="../investments/index.php"><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto</a></li>
                     <li><a href="index.php" class="active"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp;Kategorien</a></li>
@@ -279,6 +280,25 @@ $form_data = [
                                             <div class="type-name">Ausgabe</div>
                                         </label>
                                     </div>
+                                    <!-- NEUE SCHULDEN-OPTIONEN -->
+                                    <div class="type-option">
+                                        <input type="radio" id="type_debt_in" name="type" value="debt_in"
+                                            class="type-radio" <?= $form_data['type'] === 'debt_in' ? 'checked' : '' ?>
+                                            onchange="updatePreview()">
+                                        <label for="type_debt_in" class="type-label">
+                                            <div class="type-icon">🔄</div>
+                                            <div class="type-name">Schuld Eingang</div>
+                                        </label>
+                                    </div>
+                                    <div class="type-option">
+                                        <input type="radio" id="type_debt_out" name="type" value="debt_out"
+                                            class="type-radio" <?= $form_data['type'] === 'debt_out' ? 'checked' : '' ?>
+                                            onchange="updatePreview()">
+                                        <label for="type_debt_out" class="type-label">
+                                            <div class="type-icon">📤</div>
+                                            <div class="type-name">Schuld Ausgang</div>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -315,7 +335,7 @@ $form_data = [
                         </div>
 
                         <div class="preview-section">
-                            <div class="preview-title">🔍 Vorschau</div>
+                            <div class="preview-title">👁 Vorschau</div>
                             <div class="category-preview">
                                 <div class="preview-icon" id="previewIcon" style="background-color: <?= htmlspecialchars($form_data['color']) ?>;">
                                     <?= htmlspecialchars($form_data['icon']) ?>

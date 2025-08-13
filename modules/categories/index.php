@@ -21,6 +21,9 @@ $all_categories = $stmt->fetchAll();
 // Nach Typen trennen
 $income_categories = [];
 $expense_categories = [];
+// NEUE ARRAYS FÜR SCHULDEN
+$debt_in_categories = [];
+$debt_out_categories = [];
 
 // FIXED: Statistiken für jede Kategorie laden (ohne user_id Filter)
 foreach ($all_categories as $category) {
@@ -42,11 +45,20 @@ foreach ($all_categories as $category) {
         'last_used' => isset($stats['last_used']) ? $stats['last_used'] : null
     ];
 
-    // Nach Typ trennen
-    if ($category['type'] === 'income') {
-        $income_categories[] = $category;
-    } else {
-        $expense_categories[] = $category;
+    // UPDATED: Nach Typ trennen mit switch statement
+    switch ($category['type']) {
+        case 'income':
+            $income_categories[] = $category;
+            break;
+        case 'expense':
+            $expense_categories[] = $category;
+            break;
+        case 'debt_in':
+            $debt_in_categories[] = $category;
+            break;
+        case 'debt_out':
+            $debt_out_categories[] = $category;
+            break;
     }
 }
 
@@ -94,6 +106,7 @@ if (isset($_SESSION['error'])) {
                     <li><a href="../../dashboard.php"><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</a></li>
                     <li><a href="../expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
                     <li><a href="../income/index.php"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahmen</a></li>
+                    <li><a href="../debts/index.php"><i class="fa-solid fa-handshake"></i>&nbsp;&nbsp;Schulden</a></li>
                     <li><a href="../recurring/index.php"><i class="fas fa-sync"></i>&nbsp;&nbsp;Wiederkehrend</a></li>
                     <li><a href="../investments/index.php"><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto</a></li>
                     <li><a href="index.php" class="active"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp;Kategorien</a></li>
@@ -204,6 +217,128 @@ if (isset($_SESSION['error'])) {
                     <?php else: ?>
                         <div class="category-list">
                             <?php foreach ($expense_categories as $category): ?>
+                                <div class="category-card">
+                                    <div class="category-icon" style="background-color: <?= htmlspecialchars($category['color']) ?>;">
+                                        <?= htmlspecialchars($category['icon']) ?>
+                                    </div>
+
+                                    <div class="category-info">
+                                        <div class="category-name"><?= htmlspecialchars($category['name']) ?></div>
+                                        <div class="category-usage">
+                                            <?php if ($category['stats']['transaction_count'] > 0): ?>
+                                                <?= $category['stats']['transaction_count'] ?> Transaktionen (alle User)
+                                                • Zuletzt: <?= date('d.m.Y', strtotime($category['stats']['last_used'])) ?>
+                                            <?php else: ?>
+                                                Noch nicht verwendet
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+
+                                    <div class="category-stats">
+                                        <div class="stat-amount expense">
+                                            -€<?= number_format($category['stats']['total_amount'], 2, ',', '.') ?>
+                                        </div>
+                                        <div class="stat-count">
+                                            <?= $category['stats']['transaction_count'] ?> Einträge
+                                        </div>
+                                    </div>
+
+                                    <div class="category-actions">
+                                        <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
+                                        <?php if ($category['stats']['transaction_count'] == 0): ?>
+                                            <a href="delete.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-delete"
+                                                onclick="return confirm('Kategorie wirklich löschen? Dies betrifft alle User!')" title="Löschen">🗑️</a>
+                                        <?php else: ?>
+                                            <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden">🔒</button>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- NEUE SCHULDEN EINGANG SEKTION -->
+                <div class="category-section">
+                    <div class="section-header">
+                        <h2 class="section-title income"><i class="fa-solid fa-arrow-left"></i>&nbsp;&nbsp;Schulden Eingang</h2>
+                        <div class="section-stats">
+                            <?= count($debt_in_categories) ?> Kategorien
+                        </div>
+                    </div>
+
+                    <?php if (empty($debt_in_categories)): ?>
+                        <div class="empty-section">
+                            <h4>Noch keine Schulden-Eingang-Kategorien</h4>
+                            <p>Erstelle Kategorien für erhaltenes Geld.</p>
+                            <div style="margin-top: 15px;">
+                                <a href="add.php?type=debt_in" class="btn btn-small">+ Eingangs-Kategorie</a>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <div class="category-list">
+                            <?php foreach ($debt_in_categories as $category): ?>
+                                <div class="category-card">
+                                    <div class="category-icon" style="background-color: <?= htmlspecialchars($category['color']) ?>;">
+                                        <?= htmlspecialchars($category['icon']) ?>
+                                    </div>
+
+                                    <div class="category-info">
+                                        <div class="category-name"><?= htmlspecialchars($category['name']) ?></div>
+                                        <div class="category-usage">
+                                            <?php if ($category['stats']['transaction_count'] > 0): ?>
+                                                <?= $category['stats']['transaction_count'] ?> Transaktionen (alle User)
+                                                • Zuletzt: <?= date('d.m.Y', strtotime($category['stats']['last_used'])) ?>
+                                            <?php else: ?>
+                                                Noch nicht verwendet
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+
+                                    <div class="category-stats">
+                                        <div class="stat-amount income">
+                                            +€<?= number_format($category['stats']['total_amount'], 2, ',', '.') ?>
+                                        </div>
+                                        <div class="stat-count">
+                                            <?= $category['stats']['transaction_count'] ?> Einträge
+                                        </div>
+                                    </div>
+
+                                    <div class="category-actions">
+                                        <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
+                                        <?php if ($category['stats']['transaction_count'] == 0): ?>
+                                            <a href="delete.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-delete"
+                                                onclick="return confirm('Kategorie wirklich löschen? Dies betrifft alle User!')" title="Löschen">🗑️</a>
+                                        <?php else: ?>
+                                            <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden">🔒</button>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- NEUE SCHULDEN AUSGANG SEKTION -->
+                <div class="category-section">
+                    <div class="section-header">
+                        <h2 class="section-title expense"><i class="fa-solid fa-arrow-right"></i>&nbsp;&nbsp;Schulden Ausgang</h2>
+                        <div class="section-stats">
+                            <?= count($debt_out_categories) ?> Kategorien
+                        </div>
+                    </div>
+
+                    <?php if (empty($debt_out_categories)): ?>
+                        <div class="empty-section">
+                            <h4>Noch keine Schulden-Ausgang-Kategorien</h4>
+                            <p>Erstelle Kategorien für verliehenes Geld.</p>
+                            <div style="margin-top: 15px;">
+                                <a href="add.php?type=debt_out" class="btn btn-small">+ Ausgangs-Kategorie</a>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <div class="category-list">
+                            <?php foreach ($debt_out_categories as $category): ?>
                                 <div class="category-card">
                                     <div class="category-icon" style="background-color: <?= htmlspecialchars($category['color']) ?>;">
                                         <?= htmlspecialchars($category['icon']) ?>

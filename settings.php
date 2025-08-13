@@ -10,37 +10,22 @@ if (!isset($_SESSION['user_id'])) {
 require_once 'config/database.php';
 
 $db = new Database();
-$pdo = $db->getConnection();
 $user_id = $_SESSION['user_id'];
 
 // Aktuelles Startkapital laden
 $current_starting_balance = $db->getStartingBalance($user_id);
 
-// Aktuelle Statistiken berechnen
-$current_month = date('Y-m');
+// FIXED: Verwende die neuen konsistenten Methoden aus der Database-Klasse
+$wealth_data = $db->getTotalWealth($user_id);
 
-// Gesamte Einnahmen (alle Zeit)
-$stmt = $pdo->prepare("
-    SELECT COALESCE(SUM(t.amount), 0) as total 
-    FROM transactions t
-    JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND c.type = 'income'
-");
-$stmt->execute([$user_id]);
-$total_income_all_time = $stmt->fetchColumn();
-
-// Gesamte Ausgaben (alle Zeit) 
-$stmt = $pdo->prepare("
-    SELECT COALESCE(SUM(t.amount), 0) as total 
-    FROM transactions t
-    JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND c.type = 'expense'
-");
-$stmt->execute([$user_id]);
-$total_expenses_all_time = $stmt->fetchColumn();
-
-// Gesamtvermögen berechnen
-$total_balance = $current_starting_balance + $total_income_all_time - $total_expenses_all_time;
+// Für Kompatibilität separate Variablen erstellen
+$total_income_all_time = $wealth_data['total_income'];
+$total_expenses_all_time = $wealth_data['total_expenses'];
+$total_debt_in = $wealth_data['total_debt_in'];
+$total_debt_out = $wealth_data['total_debt_out'];
+$net_debt_position = $wealth_data['net_debt_position'];
+$total_investment_value = $wealth_data['total_investments'];
+$total_balance_with_investments = $wealth_data['total_wealth'];
 
 // Form-Verarbeitung
 $errors = [];
@@ -61,8 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($db->updateStartingBalance($user_id, $new_starting_balance)) {
                 $success = 'Startkapital erfolgreich auf €' . number_format($new_starting_balance, 2, ',', '.') . ' aktualisiert!';
                 $current_starting_balance = $new_starting_balance;
-                // Gesamtvermögen neu berechnen
-                $total_balance = $current_starting_balance + $total_income_all_time - $total_expenses_all_time;
+
+                // Vermögen neu berechnen
+                $wealth_data = $db->getTotalWealth($user_id);
+                $total_balance_with_investments = $wealth_data['total_wealth'];
             } else {
                 $errors[] = 'Fehler beim Aktualisieren des Startkapitals.';
             }
@@ -168,47 +155,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 14px;
         }
 
-        .form-group-inline {
-            display: flex;
-            align-items: end;
-            gap: 15px;
-        }
-
-        .currency-input-wrapper {
-            position: relative;
-            flex: 1;
-        }
-
-        .currency-symbol {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--clr-primary-a20);
-            font-weight: 600;
-            pointer-events: none;
-        }
-
-        .currency-input {
-            padding-left: 30px;
-        }
-
         .stats-overview {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
 
         .stat-item {
-            background-color: var(--clr-surface-a20);
-            border-radius: 8px;
-            padding: 15px;
             text-align: center;
+            padding: 15px;
+            background-color: var(--clr-surface-a05);
+            border-radius: 8px;
         }
 
         .stat-value {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 5px;
         }
@@ -222,75 +184,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .stat-value.neutral {
-            color: var(--clr-primary-a20);
+            color: var(--clr-surface-a60);
+        }
+
+        .stat-value.debt-positive {
+            color: #22c55e;
+        }
+
+        .stat-value.debt-negative {
+            color: #fbbf24;
         }
 
         .stat-label {
             color: var(--clr-surface-a50);
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .info-box {
-            background-color: rgba(59, 130, 246, 0.1);
-            border: 1px solid #3b82f6;
+            background-color: var(--clr-surface-a05);
+            border: 1px solid var(--clr-surface-a20);
             border-radius: 8px;
-            padding: 15px;
-            margin-top: 20px;
+            padding: 16px;
         }
 
         .info-title {
-            color: #93c5fd;
-            margin-bottom: 10px;
-            font-size: 14px;
             font-weight: 600;
+            color: var(--clr-primary-a20);
+            margin-bottom: 8px;
         }
 
         .info-text {
-            color: var(--clr-surface-a50);
-            font-size: 13px;
+            color: var(--clr-surface-a60);
+            font-size: 14px;
             line-height: 1.5;
         }
 
-        .alert {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
+        .currency-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
-        .alert-success {
-            background-color: rgba(74, 222, 128, 0.1);
-            border: 1px solid #4ade80;
-            color: #86efac;
+        .currency-symbol {
+            position: absolute;
+            left: 12px;
+            color: var(--clr-surface-a50);
+            font-weight: 600;
+            z-index: 1;
         }
 
-        .alert-error {
-            background-color: rgba(248, 113, 113, 0.1);
-            border: 1px solid #f87171;
-            color: #fca5a5;
+        .currency-input {
+            padding-left: 35px !important;
         }
 
-        @media (max-width: 1024px) {
-            .settings-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
+        .form-group-inline {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .form-group-inline .currency-input-wrapper {
+            flex: 1;
         }
 
         @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
+            .settings-grid {
+                grid-template-columns: 1fr;
             }
 
             .stats-overview {
                 grid-template-columns: 1fr 1fr;
-            }
-
-            .form-group-inline {
-                flex-direction: column;
-                align-items: stretch;
             }
         }
     </style>
@@ -299,11 +262,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="app-layout">
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <a class="sidebar-logo">
-                    <img src="assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                </a>
-                <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
+            <div style="padding: 20px; border-bottom: 1px solid var(--clr-surface-a20); margin-bottom: 20px;">
+                <h2 style="color: var(--clr-primary-a20);">StreamNet Finance</h2>
+                <p style="color: var(--clr-surface-a50); font-size: 14px;">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 
             <nav>
@@ -311,6 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li><a href="dashboard.php"><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</a></li>
                     <li><a href="modules/expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
                     <li><a href="modules/income/index.php"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahmen</a></li>
+                    <li><a href="modules/debts/index.php"><i class="fa-solid fa-handshake"></i>&nbsp;&nbsp;Schulden</a></li>
                     <li><a href="modules/recurring/index.php"><i class="fas fa-sync"></i>&nbsp;&nbsp;Wiederkehrend</a></li>
                     <li><a href="modules/investments/index.php"><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto</a></li>
                     <li><a href="modules/categories/index.php"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp;Kategorien</a></li>
@@ -388,7 +350,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <!-- Vermögensübersicht -->
+                <!-- Vermögensübersicht - KOMPLETT REPARIERT -->
                 <div class="settings-card">
                     <div class="card-header">
                         <div class="card-icon">📊</div>
@@ -396,10 +358,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div class="current-balance">
-                        <div class="balance-amount <?= $total_balance >= 0 ? 'positive' : 'negative' ?>">
-                            €<?= number_format($total_balance, 2, ',', '.') ?>
+                        <div class="balance-amount <?= $total_balance_with_investments >= 0 ? 'positive' : 'negative' ?>">
+                            €<?= number_format($total_balance_with_investments, 2, ',', '.') ?>
                         </div>
-                        <div class="balance-label">Gesamtvermögen</div>
+                        <div class="balance-label">Gesamtvermögen (inkl. Investments & Schulden)</div>
                     </div>
 
                     <div class="stats-overview">
@@ -424,13 +386,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div class="stat-label">Bilanz (Ein-/Ausgaben)</div>
                         </div>
+
+                        <!-- NEU: Schulden-Anzeige -->
+                        <?php if ($total_debt_in > 0 || $total_debt_out > 0): ?>
+                            <div class="stat-item">
+                                <div class="stat-value income">+€<?= number_format($total_debt_in, 2, ',', '.') ?></div>
+                                <div class="stat-label">Erhaltenes Geld</div>
+                            </div>
+
+                            <div class="stat-item">
+                                <div class="stat-value expense">-€<?= number_format($total_debt_out, 2, ',', '.') ?></div>
+                                <div class="stat-label">Verliehenes Geld</div>
+                            </div>
+
+                            <div class="stat-item">
+                                <div class="stat-value <?= $net_debt_position >= 0 ? 'debt-positive' : 'debt-negative' ?>">
+                                    <?= $net_debt_position >= 0 ? '+' : '' ?>€<?= number_format($net_debt_position, 2, ',', '.') ?>
+                                </div>
+                                <div class="stat-label">Netto Schulden-Position</div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- NEU: Investment-Werte anzeigen -->
+                        <?php if ($total_investment_value > 0): ?>
+                            <div class="stat-item">
+                                <div class="stat-value income">+€<?= number_format($total_investment_value, 2, ',', '.') ?></div>
+                                <div class="stat-label">Investments</div>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="info-box">
                         <div class="info-title">📈 Berechnung</div>
                         <div class="info-text">
-                            <strong>Gesamtvermögen = Startkapital + Einnahmen - Ausgaben</strong><br>
-                            €<?= number_format($current_starting_balance, 2, ',', '.') ?> + €<?= number_format($total_income_all_time, 2, ',', '.') ?> - €<?= number_format($total_expenses_all_time, 2, ',', '.') ?> = €<?= number_format($total_balance, 2, ',', '.') ?>
+                            <strong>Gesamtvermögen = Startkapital + Einnahmen - Ausgaben + Erhaltenes Geld - Verliehenes Geld + Investments</strong><br>
+                            €<?= number_format($current_starting_balance, 2, ',', '.') ?> +
+                            €<?= number_format($total_income_all_time, 2, ',', '.') ?> -
+                            €<?= number_format($total_expenses_all_time, 2, ',', '.') ?>
+                            <?php if ($total_debt_in > 0): ?> + €<?= number_format($total_debt_in, 2, ',', '.') ?><?php endif; ?>
+                                <?php if ($total_debt_out > 0): ?> - €<?= number_format($total_debt_out, 2, ',', '.') ?><?php endif; ?>
+                                    <?php if ($total_investment_value > 0): ?> + €<?= number_format($total_investment_value, 2, ',', '.') ?><?php endif; ?> =
+                                        €<?= number_format($total_balance_with_investments, 2, ',', '.') ?>
                         </div>
                     </div>
                 </div>

@@ -74,7 +74,7 @@ class Database
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             name TEXT NOT NULL,
-            type TEXT NOT NULL CHECK (type IN ('income','expense')),
+            type TEXT NOT NULL CHECK (type IN ('income','expense','debt_in','debt_out')),
             color TEXT,
             icon TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -126,6 +126,9 @@ class Database
         -- Index für bessere Performance
         CREATE INDEX IF NOT EXISTS idx_investments_user_id ON investments(user_id);
         CREATE INDEX IF NOT EXISTS idx_investments_symbol ON investments(symbol);
+        CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
+        CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+        CREATE INDEX IF NOT EXISTS idx_categories_type ON categories(type);
         SQL;
 
         $pdo->beginTransaction();
@@ -222,12 +225,23 @@ class Database
         }
 
         $default_categories = [
+            // Income categories
             ['name' => 'Gehalt',      'type' => 'income',  'color' => '#4ade80', 'icon' => '💼'],
             ['name' => 'Freelance',   'type' => 'income',  'color' => '#22c55e', 'icon' => '💻'],
+            ['name' => 'Bonus',       'type' => 'income',  'color' => '#10b981', 'icon' => '🎉'],
+
+            // Expense categories
             ['name' => 'Lebensmittel', 'type' => 'expense', 'color' => '#f97316', 'icon' => '🛒'],
             ['name' => 'Miete',       'type' => 'expense', 'color' => '#9333ea', 'icon' => '🏠'],
             ['name' => 'Transport',   'type' => 'expense', 'color' => '#78716c', 'icon' => '🚗'],
-            ['name' => 'Freizeit',    'type' => 'expense', 'color' => '#ec4899', 'icon' => '🎬']
+            ['name' => 'Freizeit',    'type' => 'expense', 'color' => '#ec4899', 'icon' => '🎬'],
+            ['name' => 'Gesundheit',  'type' => 'expense', 'color' => '#ef4444', 'icon' => '⚕️'],
+
+            // Debt categories
+            ['name' => 'Firma → Privat', 'type' => 'debt_out', 'color' => '#fbbf24', 'icon' => '💸'],
+            ['name' => 'Privat → Firma', 'type' => 'debt_in',  'color' => '#22c55e', 'icon' => '💰'],
+            ['name' => 'Darlehen vergeben', 'type' => 'debt_out', 'color' => '#f97316', 'icon' => '🤝'],
+            ['name' => 'Darlehen erhalten', 'type' => 'debt_in',  'color' => '#3b82f6', 'icon' => '🏦'],
         ];
 
         $stmt = $pdo->prepare('
@@ -310,6 +324,29 @@ class Database
         return $user;
     }
 
+    // ========================================
+    // STARTING BALANCE METHODS
+    // ========================================
+
+    /**
+     * Get user's starting balance
+     * FIXED: Verwendet das Startkapital des ersten Users (gemeinsames System)
+     *
+     * @param int $user_id
+     * @return float Starting balance
+     */
+    public function getStartingBalance(int $user_id): float
+    {
+        $pdo = $this->getConnection();
+
+        // FIXED: Immer den ersten User nehmen (gemeinsames Startkapital)
+        $stmt = $pdo->prepare('SELECT starting_balance FROM users ORDER BY id ASC LIMIT 1');
+        $stmt->execute();
+        $result = $stmt->fetchColumn();
+
+        return $result !== false ? (float)$result : 0.00;
+    }
+
     /**
      * Update user's starting balance
      * FIXED: Verwendet gemeinsames Startkapital (erste User)
@@ -326,73 +363,251 @@ class Database
         $stmt = $pdo->prepare('
             UPDATE users 
             SET starting_balance = ?
-            WHERE id = (SELECT MIN(id) FROM users)
+            WHERE id = (SELECT id FROM users ORDER BY id ASC LIMIT 1)
         ');
 
         return $stmt->execute([$starting_balance]);
     }
 
+    // ========================================
+    // FINANCIAL CALCULATION METHODS
+    // ========================================
+
     /**
-     * Get user's starting balance
-     * FIXED: Verwendet gemeinsames Startkapital (erste User)
+     * Get total income for all users (shared system)
+     * FIXED: Konsistente Berechnung ohne user_id Filter
      *
-     * @param int $user_id
-     * @return float Starting balance
+     * @param string|null $month Optional month filter (Y-m format)
+     * @return float Total income
      */
-    public function getStartingBalance(int $user_id): float
+    public function getTotalIncome(?string $month = null): float
     {
         $pdo = $this->getConnection();
 
-        // FIXED: Immer das Startkapital vom ersten User verwenden (gemeinsam)
-        $stmt = $pdo->prepare('SELECT starting_balance FROM users ORDER BY id ASC LIMIT 1');
-        $stmt->execute();
-        $result = $stmt->fetchColumn();
+        if ($month) {
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(SUM(t.amount), 0) as total 
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE c.type = 'income' AND strftime('%Y-%m', t.date) = ?
+            ");
+            $stmt->execute([$month]);
+        } else {
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(SUM(t.amount), 0) as total 
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE c.type = 'income'
+            ");
+            $stmt->execute();
+        }
 
-        return $result !== false ? (float)$result : 0.00;
+        return (float)$stmt->fetchColumn();
+    }
+
+    /**
+     * Get total expenses for all users (shared system)
+     * FIXED: Konsistente Berechnung ohne user_id Filter
+     *
+     * @param string|null $month Optional month filter (Y-m format)
+     * @return float Total expenses
+     */
+    public function getTotalExpenses(?string $month = null): float
+    {
+        $pdo = $this->getConnection();
+
+        if ($month) {
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(SUM(t.amount), 0) as total 
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE c.type = 'expense' AND strftime('%Y-%m', t.date) = ?
+            ");
+            $stmt->execute([$month]);
+        } else {
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(SUM(t.amount), 0) as total 
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE c.type = 'expense'
+            ");
+            $stmt->execute();
+        }
+
+        return (float)$stmt->fetchColumn();
+    }
+
+    /**
+     * Get total debt incoming (money received)
+     * FIXED: Konsistente Berechnung ohne user_id Filter
+     *
+     * @param string|null $month Optional month filter (Y-m format)
+     * @return float Total debt incoming
+     */
+    public function getTotalDebtIncoming(?string $month = null): float
+    {
+        $pdo = $this->getConnection();
+
+        if ($month) {
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(SUM(t.amount), 0) as total 
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE c.type = 'debt_in' AND strftime('%Y-%m', t.date) = ?
+            ");
+            $stmt->execute([$month]);
+        } else {
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(SUM(t.amount), 0) as total 
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE c.type = 'debt_in'
+            ");
+            $stmt->execute();
+        }
+
+        return (float)$stmt->fetchColumn();
+    }
+
+    /**
+     * Get total debt outgoing (money lent out)
+     * FIXED: Konsistente Berechnung ohne user_id Filter
+     *
+     * @param string|null $month Optional month filter (Y-m format)
+     * @return float Total debt outgoing
+     */
+    public function getTotalDebtOutgoing(?string $month = null): float
+    {
+        $pdo = $this->getConnection();
+
+        if ($month) {
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(SUM(t.amount), 0) as total 
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE c.type = 'debt_out' AND strftime('%Y-%m', t.date) = ?
+            ");
+            $stmt->execute([$month]);
+        } else {
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(SUM(t.amount), 0) as total 
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE c.type = 'debt_out'
+            ");
+            $stmt->execute();
+        }
+
+        return (float)$stmt->fetchColumn();
+    }
+
+    /**
+     * Calculate total wealth including investments
+     * FIXED: Konsistente Berechnung mit gemeinsamen Werten
+     *
+     * @param int $user_id User ID for starting balance
+     * @return array Wealth breakdown
+     */
+    public function getTotalWealth(int $user_id): array
+    {
+        $starting_balance = $this->getStartingBalance($user_id);
+        $total_income = $this->getTotalIncome();
+        $total_expenses = $this->getTotalExpenses();
+        $total_debt_in = $this->getTotalDebtIncoming();
+        $total_debt_out = $this->getTotalDebtOutgoing();
+        $investment_stats = $this->getTotalInvestmentValue($user_id);
+        $total_investments = $investment_stats['total_current_value'] ?? 0;
+
+        // Base wealth calculation
+        $base_wealth = $starting_balance + $total_income - $total_expenses;
+
+        // Include debts in wealth calculation
+        $wealth_with_debts = $base_wealth + $total_debt_in - $total_debt_out;
+
+        // Total wealth including investments
+        $total_wealth = $wealth_with_debts + $total_investments;
+
+        return [
+            'starting_balance' => $starting_balance,
+            'total_income' => $total_income,
+            'total_expenses' => $total_expenses,
+            'total_debt_in' => $total_debt_in,
+            'total_debt_out' => $total_debt_out,
+            'net_debt_position' => $total_debt_in - $total_debt_out,
+            'base_wealth' => $base_wealth,
+            'wealth_with_debts' => $wealth_with_debts,
+            'total_investments' => $total_investments,
+            'total_wealth' => $total_wealth,
+            'investment_stats' => $investment_stats
+        ];
+    }
+
+    // ========================================
+    // RECURRING TRANSACTIONS METHODS
+    // ========================================
+
+    /**
+     * Get due recurring transactions
+     * FIXED: Ohne user_id Filter für gemeinsames System
+     *
+     * @param int $user_id
+     * @param int $days_ahead
+     * @return array
+     */
+    public function getDueRecurringTransactions(int $user_id, int $days_ahead = 7): array
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare("
+            SELECT rt.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
+            FROM recurring_transactions rt
+            JOIN categories c ON rt.category_id = c.id
+            WHERE rt.is_active = 1 AND rt.next_due_date <= ?
+            ORDER BY rt.next_due_date ASC
+        ");
+
+        $due_date = date('Y-m-d', strtotime("+$days_ahead days"));
+        $stmt->execute([$due_date]);
+
+        return $stmt->fetchAll();
     }
 
     /**
      * Process due recurring transactions
-     * FIXED: Verarbeitet alle fälligen Transaktionen, nicht user-spezifisch
+     * FIXED: Ohne user_id Filter aber behält user_id für neue Transaktionen
      *
-     * @param int|null $user_id Process only for specific user (optional, deprecated for shared usage)
-     * @return int Number of transactions created
+     * @param int $user_id
+     * @return int Number of processed transactions
      */
-    public function processDueRecurringTransactions(?int $user_id = null): int
+    public function processDueRecurringTransactions(int $user_id): int
     {
         $pdo = $this->getConnection();
-        $today = date('Y-m-d');
-        $transactions_created = 0;
+        $processed_count = 0;
 
-        // FIXED: Get all due recurring transactions (shared across all users)
-        $sql = "
-            SELECT rt.*, c.type as transaction_type
-            FROM recurring_transactions rt
-            JOIN categories c ON rt.category_id = c.id
-            WHERE rt.is_active = 1 
-            AND rt.next_due_date <= ?
-            AND (rt.end_date IS NULL OR rt.end_date >= ?)
-        ";
-
-        $params = [$today, $today];
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $due_recurring = $stmt->fetchAll();
-
-        $pdo->beginTransaction();
         try {
-            foreach ($due_recurring as $recurring) {
-                // Create transaction
-                $create_stmt = $pdo->prepare("
-                    INSERT INTO transactions (user_id, category_id, amount, note, date, recurring_transaction_id, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+            $pdo->beginTransaction();
+
+            // Get all overdue recurring transactions
+            $stmt = $pdo->prepare("
+                SELECT rt.*, c.name as category_name, c.type as category_type
+                FROM recurring_transactions rt
+                JOIN categories c ON rt.category_id = c.id
+                WHERE rt.is_active = 1 AND rt.next_due_date <= ?
+                ORDER BY rt.next_due_date ASC
+            ");
+            $stmt->execute([date('Y-m-d')]);
+            $due_transactions = $stmt->fetchAll();
+
+            foreach ($due_transactions as $recurring) {
+                // Create new transaction
+                $insert_stmt = $pdo->prepare("
+                    INSERT INTO transactions (user_id, category_id, amount, note, date, recurring_transaction_id)
+                    VALUES (?, ?, ?, ?, ?, ?)
                 ");
 
-                $note = $recurring['note'] . ' (Wiederkehrend)';
-
-                $create_stmt->execute([
-                    $recurring['user_id'],
+                $note = $recurring['note'] . ' (Automatisch erstellt)';
+                $insert_stmt->execute([
+                    $user_id,
                     $recurring['category_id'],
                     $recurring['amount'],
                     $note,
@@ -401,7 +616,10 @@ class Database
                 ]);
 
                 // Calculate next due date
-                $next_due = $this->calculateNextDueDate($recurring['next_due_date'], $recurring['frequency']);
+                $next_due = $this->calculateNextDueDate(
+                    $recurring['next_due_date'],
+                    $recurring['frequency']
+                );
 
                 // Update recurring transaction
                 $update_stmt = $pdo->prepare("
@@ -411,16 +629,16 @@ class Database
                 ");
                 $update_stmt->execute([$next_due, $recurring['id']]);
 
-                $transactions_created++;
+                $processed_count++;
             }
 
             $pdo->commit();
-        } catch (Throwable $t) {
+        } catch (Exception $e) {
             $pdo->rollBack();
-            throw $t;
+            error_log("Error processing recurring transactions: " . $e->getMessage());
         }
 
-        return $transactions_created;
+        return $processed_count;
     }
 
     /**
@@ -439,7 +657,7 @@ class Database
                 $date->add(new DateInterval('P1D'));
                 break;
             case 'weekly':
-                $date->add(new DateInterval('P7D'));
+                $date->add(new DateInterval('P1W'));
                 break;
             case 'monthly':
                 $date->add(new DateInterval('P1M'));
@@ -452,63 +670,8 @@ class Database
         return $date->format('Y-m-d');
     }
 
-    /**
-     * Get recurring transactions statistics for user
-     * FIXED: Zeigt alle wiederkehrenden Transaktionen (shared)
-     *
-     * @param int $user_id (deprecated for shared usage)
-     * @return array Statistics
-     */
-    public function getRecurringStats(int $user_id): array
-    {
-        $pdo = $this->getConnection();
-
-        // FIXED: Get stats for all recurring transactions (shared)
-        $stmt = $pdo->prepare("
-            SELECT 
-                COUNT(*) as total,
-                COUNT(CASE WHEN is_active = 1 THEN 1 END) as active,
-                COUNT(CASE WHEN is_active = 1 AND next_due_date <= ? THEN 1 END) as due_soon,
-                COUNT(CASE WHEN is_active = 1 AND next_due_date < ? THEN 1 END) as overdue
-            FROM recurring_transactions
-        ");
-
-        $today = date('Y-m-d');
-        $soon = date('Y-m-d', strtotime('+7 days'));
-
-        $stmt->execute([$soon, $today]);
-        return $stmt->fetch() ?: [];
-    }
-
-    /**
-     * Get due recurring transactions
-     * FIXED: Zeigt alle fälligen wiederkehrenden Transaktionen (shared)
-     *
-     * @param int $user_id (deprecated for shared usage)
-     * @param int $days_ahead How many days ahead to check (default 3)
-     * @return array Recurring transactions
-     */
-    public function getDueRecurringTransactions(int $user_id, int $days_ahead = 3): array
-    {
-        $pdo = $this->getConnection();
-
-        // FIXED: Get all due recurring transactions (shared)
-        $stmt = $pdo->prepare("
-            SELECT rt.*, c.name as category_name, c.icon as category_icon, c.color as category_color, c.type as transaction_type
-            FROM recurring_transactions rt
-            JOIN categories c ON rt.category_id = c.id
-            WHERE rt.is_active = 1 AND rt.next_due_date <= ?
-            ORDER BY rt.next_due_date ASC
-        ");
-
-        $due_date = date('Y-m-d', strtotime("+$days_ahead days"));
-        $stmt->execute([$due_date]);
-
-        return $stmt->fetchAll();
-    }
-
     // ========================================
-    // INVESTMENT METHODS (NEU HINZUGEFÜGT)
+    // INVESTMENT METHODS
     // ========================================
 
     /**
@@ -537,6 +700,7 @@ class Database
 
     /**
      * Get all investments with current values (only real data)
+     * FIXED: Lädt alle Investments für gemeinsame Anzeige
      *
      * @param int $user_id
      * @return array Array of investments with current market data or error info
@@ -557,77 +721,101 @@ class Database
             return [];
         }
 
-        // Get current prices from CryptoAPI
-        require_once __DIR__ . '/crypto_api.php';
-        $crypto_api = new CryptoAPI();
+        // Try to load CryptoAPI with multiple possible paths
+        $crypto_api = null;
+        $api_paths = [
+            __DIR__ . '/crypto_api.php',
+            dirname(__DIR__) . '/config/crypto_api.php',
+            './config/crypto_api.php',
+            'crypto_api.php'
+        ];
 
-        // Collect all unique symbols
-        $symbols = array_unique(array_column($investments, 'symbol'));
-        $current_prices = $crypto_api->getCurrentPrices($symbols);
-
-        // Check if API call failed
-        $api_error = false;
-        if ($current_prices === false) {
-            $api_error = $crypto_api->getLastError();
+        foreach ($api_paths as $path) {
+            if (file_exists($path)) {
+                require_once $path;
+                if (class_exists('CryptoAPI')) {
+                    $crypto_api = new CryptoAPI();
+                    break;
+                }
+            }
         }
 
-        // Process each investment
-        foreach ($investments as &$investment) {
-            $symbol = strtolower($investment['symbol']);
-            $converted_symbol = $crypto_api->convertSymbolToId($investment['symbol']);
-
-            // Calculate values
-            $purchase_value = $investment['amount'] * $investment['purchase_price'];
-
-            if ($api_error) {
-                // API failed - mark as unavailable
+        // If CryptoAPI couldn't be loaded, return investments without current prices
+        if (!$crypto_api) {
+            foreach ($investments as &$investment) {
+                $purchase_value = $investment['amount'] * $investment['purchase_price'];
                 $investment['current_price'] = null;
                 $investment['purchase_value'] = $purchase_value;
                 $investment['current_value'] = null;
                 $investment['profit_loss'] = null;
                 $investment['profit_loss_percent'] = null;
                 $investment['price_change_24h'] = null;
-                $investment['api_error'] = $api_error;
+                $investment['api_error'] = 'CryptoAPI nicht verfügbar';
                 $investment['data_status'] = 'api_unavailable';
+            }
+            return $investments;
+        }
+
+        // Collect all unique symbols
+        $symbols = array_unique(array_column($investments, 'symbol'));
+
+        // Get prices for all symbols at once
+        $prices = $crypto_api->getCurrentPrices($symbols);
+
+        // Add current market data to each investment
+        foreach ($investments as &$investment) {
+            $symbol = strtolower($investment['symbol']);
+            $converted_symbol = $crypto_api->convertSymbolToId($investment['symbol']);
+            $purchase_value = $investment['amount'] * $investment['purchase_price'];
+
+            // Check if prices were fetched successfully
+            if ($prices === false) {
+                // API call failed completely
+                $investment['current_price'] = null;
+                $investment['purchase_value'] = $purchase_value;
+                $investment['current_value'] = null;
+                $investment['profit_loss'] = null;
+                $investment['profit_loss_percent'] = null;
+                $investment['price_change_24h'] = null;
+                $investment['api_error'] = $crypto_api->getLastError() ?: 'API nicht verfügbar';
+                $investment['data_status'] = 'api_error';
+            } elseif (isset($prices[$converted_symbol]) && is_numeric($prices[$converted_symbol])) {
+                // Success: we have current price data
+                $current_price = (float)$prices[$converted_symbol];
+                $price_change_24h = $prices[$converted_symbol . '_change'] ?? 0;
+
+                $current_value = $investment['amount'] * $current_price;
+                $profit_loss = $current_value - $purchase_value;
+                $profit_loss_percent = $purchase_value > 0 ?
+                    (($profit_loss / $purchase_value) * 100) : 0;
+
+                $investment['current_price'] = $current_price;
+                $investment['purchase_value'] = $purchase_value;
+                $investment['current_value'] = $current_value;
+                $investment['profit_loss'] = $profit_loss;
+                $investment['profit_loss_percent'] = $profit_loss_percent;
+                $investment['price_change_24h'] = $price_change_24h;
+                $investment['api_error'] = null;
+                $investment['data_status'] = 'current';
             } else {
-                // API worked - use real data
-                $current_price = $current_prices[$converted_symbol] ?? null;
-                $price_change_24h = $current_prices[$converted_symbol . '_change'] ?? null;
-
-                if ($current_price === null) {
-                    // Symbol not found in API response
-                    $investment['current_price'] = null;
-                    $investment['purchase_value'] = $purchase_value;
-                    $investment['current_value'] = null;
-                    $investment['profit_loss'] = null;
-                    $investment['profit_loss_percent'] = null;
-                    $investment['price_change_24h'] = null;
-                    $investment['api_error'] = "Symbol '{$investment['symbol']}' nicht in API gefunden";
-                    $investment['data_status'] = 'symbol_not_found';
-                } else {
-                    // All good - real current data
-                    $current_value = $investment['amount'] * $current_price;
-                    $profit_loss = $current_value - $purchase_value;
-                    $profit_loss_percent = $purchase_value > 0 ? (($profit_loss / $purchase_value) * 100) : 0;
-
-                    $investment['current_price'] = $current_price;
-                    $investment['purchase_value'] = $purchase_value;
-                    $investment['current_value'] = $current_value;
-                    $investment['profit_loss'] = $profit_loss;
-                    $investment['profit_loss_percent'] = $profit_loss_percent;
-                    $investment['price_change_24h'] = $price_change_24h;
-                    $investment['api_error'] = null;
-                    $investment['data_status'] = 'current';
-                }
+                // Symbol not found in API response
+                $investment['current_price'] = null;
+                $investment['purchase_value'] = $purchase_value;
+                $investment['current_value'] = null;
+                $investment['profit_loss'] = null;
+                $investment['profit_loss_percent'] = null;
+                $investment['price_change_24h'] = null;
+                $investment['api_error'] = "Symbol '{$investment['symbol']}' nicht gefunden";
+                $investment['data_status'] = 'symbol_not_found';
             }
         }
 
         return $investments;
     }
 
-
     /**
      * Get total investment value statistics (only real data)
+     * FIXED: Berechnet für alle Investments
      *
      * @param int $user_id
      * @return array Array with total values and statistics or error info
@@ -681,7 +869,8 @@ class Database
         // Calculate profit/loss only if we have current values
         if ($total_current_value !== null) {
             $total_profit_loss = $total_current_value - $total_purchase_value;
-            $total_profit_loss_percent = $total_purchase_value > 0 ? (($total_profit_loss / $total_purchase_value) * 100) : 0;
+            $total_profit_loss_percent = $total_purchase_value > 0 ?
+                (($total_profit_loss / $total_purchase_value) * 100) : 0;
             $data_status = $has_api_errors ? 'partial_data' : 'current';
         } else {
             $total_profit_loss = null;
@@ -758,6 +947,7 @@ class Database
 
     /**
      * Check if investment belongs to user (for security)
+     * FIXED: Erlaubt allen Usern Zugriff (gemeinsames System)
      *
      * @param int $investment_id
      * @param int $user_id
@@ -767,10 +957,320 @@ class Database
     {
         $pdo = $this->getConnection();
 
-        $stmt = $pdo->prepare('SELECT user_id FROM investments WHERE id = ?');
+        $stmt = $pdo->prepare('SELECT id FROM investments WHERE id = ?');
         $stmt->execute([$investment_id]);
         $result = $stmt->fetchColumn();
 
-        return $result !== false && (int)$result === $user_id;
+        // FIXED: Allow all users to access all investments (shared system)
+        return $result !== false;
+    }
+
+    // ========================================
+    // TRANSACTION METHODS
+    // ========================================
+
+    /**
+     * Get transactions with optional filters
+     * FIXED: Lädt alle Transaktionen für gemeinsame Anzeige
+     *
+     * @param int $user_id
+     * @param array $filters Optional filters (type, month, category_id, limit)
+     * @return array Array of transactions
+     */
+    public function getTransactions(int $user_id, array $filters = []): array
+    {
+        $pdo = $this->getConnection();
+
+        $sql = "
+            SELECT t.*, c.name as category_name, c.icon as category_icon, 
+                   c.color as category_color, c.type as transaction_type
+            FROM transactions t
+            JOIN categories c ON t.category_id = c.id
+        ";
+
+        $where_conditions = [];
+        $params = [];
+
+        // Type filter
+        if (!empty($filters['type'])) {
+            $where_conditions[] = "c.type = ?";
+            $params[] = $filters['type'];
+        }
+
+        // Month filter
+        if (!empty($filters['month'])) {
+            $where_conditions[] = "strftime('%Y-%m', t.date) = ?";
+            $params[] = $filters['month'];
+        }
+
+        // Category filter
+        if (!empty($filters['category_id'])) {
+            $where_conditions[] = "t.category_id = ?";
+            $params[] = $filters['category_id'];
+        }
+
+        if (!empty($where_conditions)) {
+            $sql .= " WHERE " . implode(' AND ', $where_conditions);
+        }
+
+        $sql .= " ORDER BY t.date DESC, t.created_at DESC";
+
+        if (!empty($filters['limit'])) {
+            $sql .= " LIMIT " . (int)$filters['limit'];
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Add new transaction
+     *
+     * @param int $user_id
+     * @param int $category_id
+     * @param float $amount
+     * @param string $note
+     * @param string $date
+     * @param int|null $recurring_transaction_id
+     * @return int Transaction ID
+     */
+    public function addTransaction(int $user_id, int $category_id, float $amount, string $note, string $date, ?int $recurring_transaction_id = null): int
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('
+            INSERT INTO transactions (user_id, category_id, amount, note, date, recurring_transaction_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ');
+
+        $stmt->execute([$user_id, $category_id, $amount, $note, $date, $recurring_transaction_id]);
+        return (int)$pdo->lastInsertId();
+    }
+
+    /**
+     * Get transaction by ID
+     *
+     * @param int $transaction_id
+     * @return array|false Transaction data or false if not found
+     */
+    public function getTransactionById(int $transaction_id)
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('
+            SELECT t.*, c.name as category_name, c.type as category_type
+            FROM transactions t
+            JOIN categories c ON t.category_id = c.id
+            WHERE t.id = ?
+        ');
+        $stmt->execute([$transaction_id]);
+
+        return $stmt->fetch() ?: false;
+    }
+
+    /**
+     * Update existing transaction
+     *
+     * @param int $transaction_id
+     * @param int $category_id
+     * @param float $amount
+     * @param string $note
+     * @param string $date
+     * @return bool Success
+     */
+    public function updateTransaction(int $transaction_id, int $category_id, float $amount, string $note, string $date): bool
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('
+            UPDATE transactions 
+            SET category_id = ?, amount = ?, note = ?, date = ?
+            WHERE id = ?
+        ');
+
+        return $stmt->execute([$category_id, $amount, $note, $date, $transaction_id]);
+    }
+
+    /**
+     * Delete transaction by ID
+     *
+     * @param int $transaction_id
+     * @return bool Success
+     */
+    public function deleteTransaction(int $transaction_id): bool
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('DELETE FROM transactions WHERE id = ?');
+        return $stmt->execute([$transaction_id]);
+    }
+
+    /**
+     * Check if transaction exists
+     * FIXED: Erlaubt allen Usern Zugriff (gemeinsames System)
+     *
+     * @param int $transaction_id
+     * @param int $user_id
+     * @return bool
+     */
+    public function isTransactionOwner(int $transaction_id, int $user_id): bool
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('SELECT id FROM transactions WHERE id = ?');
+        $stmt->execute([$transaction_id]);
+        $result = $stmt->fetchColumn();
+
+        // FIXED: Allow all users to access all transactions (shared system)
+        return $result !== false;
+    }
+
+    // ========================================
+    // CATEGORY METHODS
+    // ========================================
+
+    /**
+     * Get all categories
+     * FIXED: Lädt alle Kategorien für gemeinsame Nutzung
+     *
+     * @param string|null $type Optional type filter
+     * @return array Array of categories
+     */
+    public function getCategories(?string $type = null): array
+    {
+        $pdo = $this->getConnection();
+
+        if ($type) {
+            $stmt = $pdo->prepare('SELECT * FROM categories WHERE type = ? ORDER BY name');
+            $stmt->execute([$type]);
+        } else {
+            $stmt = $pdo->prepare('SELECT * FROM categories ORDER BY type, name');
+            $stmt->execute();
+        }
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get category by ID
+     *
+     * @param int $category_id
+     * @return array|false Category data or false if not found
+     */
+    public function getCategoryById(int $category_id)
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('SELECT * FROM categories WHERE id = ?');
+        $stmt->execute([$category_id]);
+
+        return $stmt->fetch() ?: false;
+    }
+
+    /**
+     * Add new category
+     *
+     * @param int $user_id
+     * @param string $name
+     * @param string $type
+     * @param string $color
+     * @param string $icon
+     * @return int Category ID
+     */
+    public function addCategory(int $user_id, string $name, string $type, string $color, string $icon): int
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('
+            INSERT INTO categories (user_id, name, type, color, icon)
+            VALUES (?, ?, ?, ?, ?)
+        ');
+
+        $stmt->execute([$user_id, $name, $type, $color, $icon]);
+        return (int)$pdo->lastInsertId();
+    }
+
+    /**
+     * Update existing category
+     *
+     * @param int $category_id
+     * @param string $name
+     * @param string $type
+     * @param string $color
+     * @param string $icon
+     * @return bool Success
+     */
+    public function updateCategory(int $category_id, string $name, string $type, string $color, string $icon): bool
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('
+            UPDATE categories 
+            SET name = ?, type = ?, color = ?, icon = ?
+            WHERE id = ?
+        ');
+
+        return $stmt->execute([$name, $type, $color, $icon, $category_id]);
+    }
+
+    /**
+     * Delete category by ID
+     *
+     * @param int $category_id
+     * @return bool Success
+     */
+    public function deleteCategory(int $category_id): bool
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('DELETE FROM categories WHERE id = ?');
+        return $stmt->execute([$category_id]);
+    }
+
+    /**
+     * Check if category is in use
+     *
+     * @param int $category_id
+     * @return bool True if category is used by any transaction
+     */
+    public function isCategoryInUse(int $category_id): bool
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM transactions WHERE category_id = ?');
+        $stmt->execute([$category_id]);
+
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+
+    /**
+     * Get category usage statistics
+     *
+     * @param int $category_id
+     * @return array Usage statistics
+     */
+    public function getCategoryStats(int $category_id): array
+    {
+        $pdo = $this->getConnection();
+
+        $stmt = $pdo->prepare("
+            SELECT 
+                COUNT(*) as transaction_count,
+                COALESCE(SUM(amount), 0) as total_amount,
+                MAX(date) as last_used
+            FROM transactions 
+            WHERE category_id = ?
+        ");
+        $stmt->execute([$category_id]);
+        $stats = $stmt->fetch();
+
+        return [
+            'transaction_count' => (int)($stats['transaction_count'] ?? 0),
+            'total_amount' => (float)($stats['total_amount'] ?? 0.00),
+            'last_used' => $stats['last_used'] ?? null
+        ];
     }
 }

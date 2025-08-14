@@ -29,65 +29,45 @@ if ($processed_count > 0) {
 // Dashboard-Statistiken laden
 $current_month = date('Y-m');
 
-// Startkapital laden
-$starting_balance = $db->getStartingBalance($user_id);
+// UPDATED: Verwende die neue getTotalWealth() Methode für alle Berechnungen
+$wealth_data = $db->getTotalWealth($user_id);
 
-// FIXED: Gesamte Einnahmen diesen Monat - user_id Filter entfernt
-$stmt = $pdo->prepare("
-    SELECT COALESCE(SUM(t.amount), 0) as total 
-    FROM transactions t
-    JOIN categories c ON t.category_id = c.id
-    WHERE c.type = 'income' AND strftime('%Y-%m', t.date) = ?
-");
-$stmt->execute([$current_month]);
-$total_income = $stmt->fetchColumn();
-
-// FIXED: Gesamte Ausgaben diesen Monat - user_id Filter entfernt
-$stmt = $pdo->prepare("
-    SELECT COALESCE(SUM(t.amount), 0) as total 
-    FROM transactions t
-    JOIN categories c ON t.category_id = c.id
-    WHERE c.type = 'expense' AND strftime('%Y-%m', t.date) = ?
-");
-$stmt->execute([$current_month]);
-$total_expenses = $stmt->fetchColumn();
-
-// FIXED: Gesamte Einnahmen (alle Zeit) - user_id Filter entfernt
-$stmt = $pdo->prepare("
-    SELECT COALESCE(SUM(t.amount), 0) as total 
-    FROM transactions t
-    JOIN categories c ON t.category_id = c.id
-    WHERE c.type = 'income'
-");
-$stmt->execute([]);
-$total_income_all_time = $stmt->fetchColumn();
-
-// FIXED: Gesamte Ausgaben (alle Zeit) - user_id Filter entfernt
-$stmt = $pdo->prepare("
-    SELECT COALESCE(SUM(t.amount), 0) as total 
-    FROM transactions t
-    JOIN categories c ON t.category_id = c.id
-    WHERE c.type = 'expense'
-");
-$stmt->execute([]);
-$total_expenses_all_time = $stmt->fetchColumn();
-
-// Investment-Werte laden
-$investment_stats = $db->getTotalInvestmentValue($user_id);
-$total_investment_value = $investment_stats['total_current_value'] ?? 0;
+// Monatliche Statistiken (aktueller Monat)
+$total_income = $db->getTotalIncome($current_month);
+$total_expenses = $db->getTotalExpenses($current_month);
+$total_debt_in_month = $db->getTotalDebtIncoming($current_month);
+$total_debt_out_month = $db->getTotalDebtOutgoing($current_month);
 
 // Saldo berechnen (nur aktueller Monat)
 $balance = $total_income - $total_expenses;
+$debt_balance_month = $total_debt_in_month - $total_debt_out_month;
 
-// Gesamtvermögen berechnen (Startkapital + alle Einnahmen - alle Ausgaben + Investments)
-$total_wealth = $starting_balance + $total_income_all_time - $total_expenses_all_time;
-$total_wealth_with_investments = $total_wealth + ($total_investment_value ?? 0);
+// UPDATED: Verwende die berechneten Werte aus getTotalWealth()
+$starting_balance = $wealth_data['starting_balance'];
+$total_income_all_time = $wealth_data['total_income'];
+$total_expenses_all_time = $wealth_data['total_expenses'];
+$total_debt_in = $wealth_data['total_debt_in'];
+$total_debt_out = $wealth_data['total_debt_out'];
+$net_debt_position = $wealth_data['net_debt_position'];
+$total_investment_value = $wealth_data['total_investments'];
+$total_wealth_with_investments = $wealth_data['total_wealth'];
 
-// Investments laden für Anzeige
-$investments = $db->getInvestmentsWithCurrentValue($user_id);
-$top_investments = array_slice($investments, 0, 5); // Top 5 für Dashboard
+// Lade Top Investments für die Anzeige
+$all_investments = $db->getInvestmentsWithCurrentValue($user_id);
+$top_investments = array_slice($all_investments, 0, 3); // Top 3 nehmen
 
-// FIXED: Wiederkehrende Transaktionen Statistiken - user_id Filter entfernt
+// Success/Error Messages
+$message = '';
+if (isset($_SESSION['success'])) {
+    $message = '<div class="alert alert-success">' . htmlspecialchars($_SESSION['success']) . '</div>';
+    unset($_SESSION['success']);
+}
+if (isset($_SESSION['error'])) {
+    $message = '<div class="alert alert-error">' . htmlspecialchars($_SESSION['error']) . '</div>';
+    unset($_SESSION['error']);
+}
+
+// Recurring Transaction Statistics
 $stmt = $pdo->prepare("
     SELECT 
         COUNT(*) as total_recurring,
@@ -195,171 +175,173 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
             margin-bottom: 20px;
         }
 
-        .wealth-title {
-            font-size: 1.4rem;
-            font-weight: 700;
+        .wealth-card h2 {
             color: var(--clr-primary-a20);
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            margin: 0;
+            font-size: 24px;
         }
 
         .wealth-value {
-            font-size: 3.5rem;
-            font-weight: 800;
-            color: var(--clr-primary-a10);
-            margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .wealth-subtitle {
-            color: var(--clr-surface-a50);
-            font-size: 16px;
-            margin-bottom: 24px;
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--clr-primary-a0);
+            margin-bottom: 15px;
+            text-align: center;
         }
 
         .wealth-breakdown {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .breakdown-title {
-            font-weight: 600;
-            color: var(--clr-primary-a30);
-            margin-bottom: 16px;
-            font-size: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
 
         .breakdown-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .breakdown-item:last-child {
-            border-bottom: none;
+            text-align: center;
+            padding: 15px;
+            background: var(--clr-surface-a05);
+            border-radius: 8px;
+            border: 1px solid var(--clr-surface-a10);
         }
 
         .breakdown-value {
-            font-weight: 600;
-            color: var(--clr-light-a0);
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
         }
 
-        /* Andere Karten in einer Reihe darunter */
-        .other-cards {
+        .breakdown-label {
+            color: var(--clr-surface-a50);
+            font-size: 14px;
+        }
+
+        .positive {
+            color: #22c55e;
+        }
+
+        .negative {
+            color: #ef4444;
+        }
+
+        .neutral {
+            color: var(--clr-surface-a70);
+        }
+
+        /* NEUE CSS-Klassen für Schulden */
+        .debt-positive {
+            color: #22c55e;
+        }
+
+        .debt-negative {
+            color: #f97316;
+        }
+
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
 
-        .card {
-            background: var(--clr-surface-a10);
-            border: 1px solid var(--clr-surface-a20);
-            border-radius: 12px;
-            padding: 24px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+        .stat-card {
+            background: var(--clr-surface-a05);
+            border: 1px solid var(--clr-surface-a10);
+            border-radius: 8px;
+            padding: 20px;
         }
 
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            border-color: var(--clr-primary-a0);
+        .stat-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .stat-title {
+            font-weight: bold;
+            color: var(--clr-surface-a70);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-subtitle {
+            color: var(--clr-surface-a50);
+            font-size: 14px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--clr-surface-a05);
+            border: 1px solid var(--clr-surface-a10);
+            border-radius: 8px;
+            padding: 20px;
         }
 
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--clr-surface-a10);
         }
 
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
+        .card h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--clr-surface-a05);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .transaction-meta {
             color: var(--clr-surface-a50);
+            font-size: 14px;
         }
 
-        .card-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: var(--clr-primary-a20);
-            margin-bottom: 8px;
+        .transaction-amount {
+            font-weight: bold;
+            font-size: 16px;
         }
 
-        /* Spezifische Karten-Stile */
-        .card-investment {
-            border-color: #10b981;
-        }
-
-        .card-investment:hover {
-            border-color: #059669;
-        }
-
-        .card-investment .card-value {
-            color: #10b981;
-        }
-
-        .card-recurring {
-            border-color: #6b7280;
-        }
-
-        .card-recurring:hover {
-            border-color: #4b5563;
-        }
-
-        .card-recurring .card-value {
-            color: #9ca3af;
-        }
-
-        .card-income {
-            border-color: #4ade80;
-        }
-
-        .card-income:hover {
-            border-color: #22c55e;
-        }
-
-        .card-income .card-value {
-            color: #4ade80;
-        }
-
-        .card-expense {
-            border-color: #f87171;
-        }
-
-        .card-expense:hover {
-            border-color: #ef4444;
-        }
-
-        .card-expense .card-value {
-            color: #f87171;
-        }
-
-        /* Statistics Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 24px;
-            margin-top: 30px;
-        }
-
-        .stats-grid .card {
-            height: fit-content;
-        }
-
-        /* Investment Items */
         .investment-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid var(--clr-surface-a20);
+            border-bottom: 1px solid var(--clr-surface-a05);
         }
 
         .investment-item:last-child {
@@ -367,14 +349,12 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
         }
 
         .investment-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            flex: 1;
         }
 
         .investment-symbol {
-            font-weight: 700;
-            color: var(--clr-primary-a20);
+            font-weight: bold;
+            margin-bottom: 4px;
         }
 
         .investment-name {
@@ -387,137 +367,74 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
         }
 
         .investment-current {
-            font-weight: 600;
-            color: var(--clr-light-a0);
+            font-weight: bold;
+            margin-bottom: 4px;
         }
 
         .investment-change {
-            font-size: 13px;
-        }
-
-        .investment-change.positive {
-            color: #4ade80;
-        }
-
-        .investment-change.negative {
-            color: #f87171;
-        }
-
-        /* Transaction Items */
-        .transaction-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--clr-surface-a20);
-        }
-
-        .transaction-item:last-child {
-            border-bottom: none;
-        }
-
-        .transaction-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-
-        .transaction-details {
-            flex: 1;
-        }
-
-        .transaction-title {
-            font-weight: 600;
-            color: var(--clr-light-a0);
             font-size: 14px;
-        }
-
-        .transaction-meta {
-            color: var(--clr-surface-a50);
-            font-size: 12px;
-            margin-top: 2px;
-        }
-
-        .transaction-amount {
-            font-weight: 700;
-            text-align: right;
-        }
-
-        .transaction-amount.income {
-            color: #4ade80;
-        }
-
-        .transaction-amount.expense {
-            color: #f87171;
-        }
-
-        /* Alerts und Notices */
-        .alert {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .alert-success {
-            background-color: rgba(74, 222, 128, 0.1);
-            border: 1px solid #4ade80;
-            color: #86efac;
-        }
-
-        .shared-notice {
-            background-color: rgba(59, 130, 246, 0.1);
-            border: 1px solid #3b82f6;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .no-data {
-            text-align: center;
-            color: var(--clr-surface-a50);
-            padding: 20px;
         }
 
         .price-unavailable {
-            color: #94a3b8;
+            color: var(--clr-surface-a50);
             font-style: italic;
         }
 
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .other-cards {
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            }
+        .info-box {
+            background: var(--clr-surface-a05);
+            border: 1px solid var(--clr-surface-a10);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: var(--clr-primary-a20);
+            margin-bottom: 10px;
+        }
+
+        .info-text {
+            color: var(--clr-surface-a70);
+            line-height: 1.5;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--clr-surface-a50);
+            padding: 40px 20px;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            margin-bottom: 20px;
+        }
+
+        .income {
+            color: #22c55e;
+        }
+
+        .expense {
+            color: #ef4444;
+        }
+
+        .debt_in {
+            color: #22c55e;
+        }
+
+        .debt_out {
+            color: #f97316;
         }
 
         @media (max-width: 768px) {
-            .dashboard-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
+            .dashboard-grid {
+                grid-template-columns: 1fr;
             }
 
-            .quick-actions {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .wealth-card {
-                padding: 24px;
-            }
-
-            .wealth-value {
-                font-size: 2.5rem;
-            }
-
-            .other-cards {
+            .wealth-breakdown {
                 grid-template-columns: 1fr;
             }
 
@@ -525,28 +442,13 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 grid-template-columns: 1fr;
             }
 
-            .investment-item {
+            .quick-actions {
                 flex-direction: column;
-                text-align: center;
-                gap: 8px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .wealth-card {
-                padding: 20px;
+                width: 100%;
             }
 
             .wealth-value {
-                font-size: 2rem;
-            }
-
-            .card {
-                padding: 16px;
-            }
-
-            .card-value {
-                font-size: 1.8rem;
+                font-size: 36px;
             }
         }
     </style>
@@ -567,9 +469,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                     <li><a href="dashboard.php" class="active"><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</a></li>
                     <li><a href="modules/expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
                     <li><a href="modules/income/index.php"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahmen</a></li>
-                    <li><a href="modules/debts/index.php" class="<?= strpos($_SERVER['PHP_SELF'], 'debts') ? 'active' : '' ?>">
-                            <i class="fa-solid fa-handshake"></i>&nbsp;&nbsp;Schulden
-                        </a></li>
+                    <li><a href="modules/debts/index.php"><i class="fa-solid fa-handshake"></i>&nbsp;&nbsp;Schulden</a></li>
                     <li><a href="modules/recurring/index.php"><i class="fas fa-sync"></i>&nbsp;&nbsp;Wiederkehrend</a></li>
                     <li><a href="modules/investments/index.php"><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto</a></li>
                     <li><a href="modules/categories/index.php"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp;Kategorien</a></li>
@@ -586,193 +486,139 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
         </aside>
 
         <main class="main-content">
-            <!-- Success Message -->
-            <?php if (isset($_SESSION['success'])): ?>
-                <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']) ?></div>
-                <?php unset($_SESSION['success']); ?>
-            <?php endif; ?>
-
-            <!-- Info für fällige wiederkehrende Transaktionen -->
-            <!-- <?php if (!empty($due_recurring)): ?>
-                <div class="shared-notice">
-                    <div class="shared-notice-title">🔄 Fällige wiederkehrende Transaktionen</div>
-                    <div class="shared-notice-text">
-                        <?= count($due_recurring) ?> wiederkehrende Transaktion(en) sind fällig:
-                        <?php foreach ($due_recurring as $due): ?>
-                            <span style="display: block; margin-top: 5px;">
-                                <?= htmlspecialchars($due['category_icon']) ?> <?= htmlspecialchars($due['note']) ?>
-                                (<?= $due['transaction_type'] === 'income' ? '+' : '-' ?>€<?= number_format($due['amount'], 2, ',', '.') ?>)
-                                - Fällig am <?= date('d.m.Y', strtotime($due['next_due_date'])) ?>
-                            </span>
-                        <?php endforeach; ?>
-                        <div style="margin-top: 10px;">
-                            <a href="modules/recurring/index.php" class="btn btn-small">🔄 Wiederkehrende Transaktionen verwalten</a>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?> -->
-
             <div class="dashboard-header">
                 <div class="welcome-text">
                     <h1><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</h1>
                     <p>Gemeinsamer Überblick über die Finanzen - <?= date('F Y') ?></p>
                 </div>
                 <div class="quick-actions">
-                    <a href="modules/income/add.php" class="btn">+ Einnahme</a>
+                    <a href="modules/income/add.php" class="btn btn-primary">+ Einnahme</a>
                     <a href="modules/expenses/add.php" class="btn btn-secondary">+ Ausgabe</a>
-                    <a href="modules/investments/add.php" class="btn" style="background-color: #10b981;">+ Investment</a>
-                    <a href="modules/recurring/add.php" class="btn" style="background-color: #6b7280;">+ Wiederkehrend</a>
+                    <a href="modules/debts/add.php?type=debt_in" class="btn" style="background: #22c55e; color: white;">+ Geld erhalten</a>
+                    <a href="modules/debts/add.php?type=debt_out" class="btn" style="background: #f97316; color: white;">+ Geld verleihen</a>
+                    <a href="modules/investments/add.php" class="btn" style="background: #f59e0b; color: white;">+ Investment</a>
                 </div>
             </div>
 
-            <!-- Shortcut zu Einstellungen wenn kein Startkapital gesetzt -->
-            <?php if ($starting_balance == 0): ?>
-                <div style="background-color: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align: center;">
-                    <div style="color: #fcd34d; margin-bottom: 10px; font-weight: 600;">💡 Tipp: Startkapital festlegen</div>
-                    <div style="color: var(--clr-surface-a50); font-size: 14px; margin-bottom: 15px;">
-                        Lege das gemeinsame Startkapital fest, um das echte Gesamtvermögen zu sehen!
-                    </div>
-                    <a href="settings.php" class="btn btn-small">⚙️ Startkapital festlegen</a>
-                </div>
-            <?php endif; ?>
+            <?= $message ?>
 
-            <!-- GESAMTVERMÖGEN KARTE - ALLEINE IN EINER REIHE -->
+            <!-- Gesamtvermögen (Hauptkarte) -->
             <div class="wealth-card-container">
                 <div class="wealth-card">
                     <div class="wealth-card-header">
-                        <div class="wealth-title">
-                            <i class="fa-solid fa-globe"></i>&nbsp;&nbsp;Gesamtvermögen
+                        <h2><i class="fa-solid fa-globe"></i> Gesamtvermögen</h2>
+                        <div style="color: var(--clr-surface-a50); font-size: 14px;">
+                            Stand: <?= date('d.m.Y H:i') ?>
                         </div>
                     </div>
 
-                    <div class="wealth-value">€<?= formatNumber($total_wealth_with_investments) ?></div>
-                    <div class="wealth-subtitle">Startkapital + Einnahmen - Ausgaben + Investments</div>
+                    <div class="wealth-value">
+                        €<?= formatNumber($total_wealth_with_investments) ?>
+                    </div>
 
                     <div class="wealth-breakdown">
-                        <div class="breakdown-title"><i class="fa-solid fa-eye"></i> Aufschlüsselung</div>
                         <div class="breakdown-item">
-                            <span>Startkapital:</span>
-                            <span class="breakdown-value">€<?= number_format($starting_balance, 2, ',', '.') ?></span>
+                            <div class="breakdown-value">€<?= formatNumber($starting_balance) ?></div>
+                            <div class="breakdown-label">Startkapital</div>
                         </div>
                         <div class="breakdown-item">
-                            <span>+ Gesamt Einnahmen:</span>
-                            <span class="breakdown-value">€<?= number_format($total_income_all_time, 2, ',', '.') ?></span>
+                            <div class="breakdown-value positive">+€<?= formatNumber($total_income_all_time) ?></div>
+                            <div class="breakdown-label">Gesamt Einnahmen</div>
                         </div>
                         <div class="breakdown-item">
-                            <span>- Gesamt Ausgaben:</span>
-                            <span class="breakdown-value">€<?= number_format($total_expenses_all_time, 2, ',', '.') ?></span>
+                            <div class="breakdown-value negative">-€<?= formatNumber($total_expenses_all_time) ?></div>
+                            <div class="breakdown-label">Gesamt Ausgaben</div>
                         </div>
-                        <?php if (($total_investment_value ?? 0) > 0): ?>
+
+                        <!-- NEUE Schulden-Anzeige -->
+                        <?php if ($total_debt_in > 0 || $total_debt_out > 0): ?>
                             <div class="breakdown-item">
-                                <span>+ Investments:</span>
-                                <span class="breakdown-value">€<?= formatNumber($total_investment_value) ?></span>
+                                <div class="breakdown-value debt-positive">+€<?= formatNumber($total_debt_in) ?></div>
+                                <div class="breakdown-label">Erhaltenes Geld</div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="breakdown-value debt-negative">-€<?= formatNumber($total_debt_out) ?></div>
+                                <div class="breakdown-label">Verliehenes Geld</div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($total_investment_value > 0): ?>
+                            <div class="breakdown-item">
+                                <div class="breakdown-value positive">+€<?= formatNumber($total_investment_value) ?></div>
+                                <div class="breakdown-label">Investments</div>
                             </div>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
 
-            <!-- ALLE ANDEREN KARTEN - IN EINER REIHE DARUNTER -->
-            <div class="other-cards">
-                <!-- Investment Card -->
-                <div class="card card-investment">
-                    <div class="card-header">
-                        <h3 class="card-title">Investments</h3>
-                        <span><i class="fa-brands fa-btc"></i></span>
+            <!-- Monatsstatistiken -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                        <div class="stat-title">Einnahmen diesen Monat</div>
                     </div>
-                    <?php if ($total_investment_value !== null): ?>
-                        <div class="card-value">€<?= formatNumber($total_investment_value) ?></div>
-                        <?php if ($investment_stats['investment_count'] > 0): ?>
-                            <p style="color: var(--clr-surface-a50); font-size: 14px;">
-                                <?= $investment_stats['investment_count'] ?> Positionen
-                                <?php if (($investment_stats['total_profit_loss_percent'] ?? null) !== null): ?>
-                                    • <?= ($investment_stats['total_profit_loss_percent'] ?? 0) >= 0 ? '+' : '' ?><?= formatNumber($investment_stats['total_profit_loss_percent'], 1) ?>%
-                                <?php else: ?>
-                                    • <span class="price-unavailable">Gewinn/Verlust nicht verfügbar</span>
-                                <?php endif; ?>
-                            </p>
-                        <?php else: ?>
-                            <p style="color: var(--clr-surface-a50); font-size: 14px;">Noch keine Investments</p>
-                        <?php endif; ?>
-                    <?php else: ?>
-                        <div class="card-value price-unavailable">Nicht verfügbar</div>
-                        <p style="color: #f87171; font-size: 14px;">❌ API nicht erreichbar</p>
-                    <?php endif; ?>
+                    <div class="stat-value income">+€<?= formatNumber($total_income) ?></div>
+                    <div class="stat-subtitle">Einnahmen</div>
                 </div>
 
-                <!-- Wiederkehrende Transaktionen -->
-                <div class="card card-recurring">
-                    <div class="card-header">
-                        <h3 class="card-title">Wiederkehrende Transaktionen</h3>
-                        <span><i class="fas fa-sync"></i></span>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                        <div class="stat-title">Ausgaben diesen Monat</div>
                     </div>
-                    <div class="card-value"><?= $recurring_stats['active_recurring'] ?></div>
-                    <p style="color: var(--clr-surface-a50); font-size: 14px;">
-                        <?= $recurring_stats['active_recurring'] ?> aktiv von <?= $recurring_stats['total_recurring'] ?> gesamt
-                        <?php if ($recurring_stats['due_soon'] > 0): ?>
-                            <br><span style="color: #fbbf24; font-weight: 600;"><?= $recurring_stats['due_soon'] ?> bald fällig</span>
-                        <?php endif; ?>
-                    </p>
+                    <div class="stat-value expense">-€<?= formatNumber($total_expenses) ?></div>
+                    <div class="stat-subtitle">Ausgaben</div>
                 </div>
 
-                <!-- Einnahmen -->
-                <div class="card card-income">
-                    <div class="card-header">
-                        <h3 class="card-title">Einnahmen</h3>
-                        <span><i class="fa-solid fa-sack-dollar"></i></span>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon"><i class="fa-solid fa-money-check-dollar"></i></div>
+                        <div class="stat-title">Monatssaldo</div>
                     </div>
-                    <div class="card-value">+ €<?= number_format($total_income, 2, ',', '.') ?></div>
-                    <p style="color: var(--clr-surface-a50); font-size: 14px;">Diesen Monat</p>
+                    <div class="stat-value <?= $balance >= 0 ? 'positive' : 'negative' ?>">
+                        <?= $balance >= 0 ? '+' : '' ?>€<?= formatNumber($balance) ?>
+                    </div>
+                    <div class="stat-subtitle">Einnahmen - Ausgaben</div>
                 </div>
 
-                <!-- Ausgaben -->
-                <div class="card card-expense">
-                    <div class="card-header">
-                        <h3 class="card-title">Ausgaben</h3>
-                        <span><i class="fa-solid fa-money-bill-wave"></i></span>
+                <!-- NEUE Schulden-Statistik für diesen Monat -->
+                <?php if ($total_debt_in_month > 0 || $total_debt_out_month > 0): ?>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">🤝</div>
+                            <div class="stat-title">Schulden-Saldo</div>
+                        </div>
+                        <div class="stat-value <?= $debt_balance_month >= 0 ? 'debt-positive' : 'debt-negative' ?>">
+                            <?= $debt_balance_month >= 0 ? '+' : '' ?>€<?= formatNumber($debt_balance_month) ?>
+                        </div>
+                        <div class="stat-subtitle">Dieser Monat</div>
                     </div>
-                    <div class="card-value">- €<?= number_format($total_expenses, 2, ',', '.') ?></div>
-                    <p style="color: var(--clr-surface-a50); font-size: 14px;">Diesen Monat</p>
-                </div>
-
-                <!-- Monatssaldo -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Monatssaldo</h3>
-                        <span><i class="fa-solid fa-money-check-dollar"></i></span>
-                    </div>
-                    <div class="card-value" style="color: <?= $balance >= 0 ? '#4ade80' : '#f87171' ?>">
-                        €<?= number_format($balance, 2, ',', '.') ?>
-                    </div>
-                    <p style="color: var(--clr-surface-a50); font-size: 14px;">Einnahmen - Ausgaben (<?= date('M Y') ?>)</p>
-                </div>
+                <?php endif; ?>
             </div>
 
-            <!-- Statistics Section -->
-            <div class="stats-grid">
+            <!-- Content Grid -->
+            <div class="dashboard-grid">
+                <!-- Letzte Transaktionen -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 style="color: var(--clr-primary-a20);"><i class="fa-solid fa-eye"></i> Letzte Transaktionen</h3>
+                        <h3 style="color: var(--clr-primary-a20);"><i class="fa-solid fa-clock-rotate-left"></i> Letzte Transaktionen</h3>
                         <a href="modules/expenses/index.php" style="color: var(--clr-primary-a20); text-decoration: none; font-size: 14px;">
                             Alle anzeigen →
                         </a>
                     </div>
 
                     <?php if (empty($recent_transactions)): ?>
-                        <div class="no-data">
-                            <p>Noch keine Transaktionen vorhanden.</p>
-                            <p style="margin-top: 10px;">
-                                <a href="modules/income/add.php" class="btn" style="margin-right: 10px;">Erste Einnahme hinzufügen</a>
-                                <a href="modules/expenses/add.php" class="btn btn-secondary">Erste Ausgabe hinzufügen</a>
-                            </p>
+                        <div class="empty-state">
+                            <h3>Keine Transaktionen</h3>
+                            <p>Erstelle deine erste Transaktion!</p>
+                            <a href="modules/expenses/add.php" class="btn btn-small">Transaktion hinzufügen</a>
                         </div>
                     <?php else: ?>
                         <?php foreach ($recent_transactions as $transaction): ?>
                             <div class="transaction-item">
-                                <div class="transaction-icon" style="background-color: <?= htmlspecialchars($transaction['category_color']) ?>20; color: <?= htmlspecialchars($transaction['category_color']) ?>;">
-                                    <?= htmlspecialchars($transaction['category_icon']) ?>
-                                </div>
-                                <div class="transaction-details">
+                                <div class="transaction-info">
                                     <div class="transaction-title">
                                         <?= htmlspecialchars($transaction['note'] ?: $transaction['category_name']) ?>
                                     </div>
@@ -782,13 +628,27 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                                     </div>
                                 </div>
                                 <div class="transaction-amount <?= $transaction['transaction_type'] ?>">
-                                    <?= $transaction['transaction_type'] === 'income' ? '+' : '-' ?>€<?= number_format($transaction['amount'], 2, ',', '.') ?>
+                                    <?php
+                                    $prefix = '';
+                                    switch ($transaction['transaction_type']) {
+                                        case 'income':
+                                        case 'debt_in':
+                                            $prefix = '+';
+                                            break;
+                                        case 'expense':
+                                        case 'debt_out':
+                                            $prefix = '-';
+                                            break;
+                                    }
+                                    ?>
+                                    <?= $prefix ?>€<?= number_format($transaction['amount'], 2, ',', '.') ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
 
+                <!-- Top Investments -->
                 <?php if (!empty($top_investments)): ?>
                     <div class="card">
                         <div class="card-header">
@@ -823,7 +683,67 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                             </div>
                         <?php endforeach; ?>
                     </div>
+                <?php else: ?>
+                    <!-- Info-Box wenn keine Investments -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 style="color: var(--clr-primary-a20);"><i class="fa-brands fa-btc"></i> Investments</h3>
+                        </div>
+                        <div class="empty-state">
+                            <h3>Keine Investments</h3>
+                            <p>Erstelle dein erstes Crypto-Investment!</p>
+                            <a href="modules/investments/add.php" class="btn btn-small">Investment hinzufügen</a>
+                        </div>
+                    </div>
                 <?php endif; ?>
+            </div>
+
+            <!-- NEUE Schulden-Info-Box (nur anzeigen wenn Schulden existieren) -->
+            <?php if ($total_debt_in > 0 || $total_debt_out > 0): ?>
+                <div class="info-box">
+                    <div class="info-title">🤝 Schulden-Übersicht</div>
+                    <div class="info-text">
+                        <strong>Deine Schulden-Position:</strong><br>
+                        Erhaltenes Geld: <span class="debt-positive">+€<?= formatNumber($total_debt_in) ?></span><br>
+                        Verliehenes Geld: <span class="debt-negative">-€<?= formatNumber($total_debt_out) ?></span><br>
+                        <strong>Netto-Position: <span class="<?= $net_debt_position >= 0 ? 'debt-positive' : 'debt-negative' ?>">
+                                <?= $net_debt_position >= 0 ? '+' : '' ?>€<?= formatNumber($net_debt_position) ?>
+                            </span></strong><br><br>
+
+                        <?php if ($net_debt_position > 0): ?>
+                            💡 Du hast mehr Geld erhalten als verliehen - das verbessert dein Gesamtvermögen!
+                        <?php elseif ($net_debt_position < 0): ?>
+                            💡 Du hast mehr Geld verliehen als erhalten - das reduziert dein verfügbares Vermögen.
+                        <?php else: ?>
+                            💡 Deine Schulden-Position ist ausgeglichen.
+                        <?php endif; ?>
+
+                        <br><br>
+                        <a href="modules/debts/index.php" style="color: var(--clr-primary-a20);">→ Alle Schulden verwalten</a>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Allgemeine Info-Box -->
+            <div class="info-box">
+                <div class="info-title">📈 Vermögensberechnung</div>
+                <div class="info-text">
+                    <strong>Gesamtvermögen = Startkapital + Einnahmen - Ausgaben + Erhaltenes Geld - Verliehenes Geld + Investments</strong><br>
+                    €<?= formatNumber($starting_balance) ?> + €<?= formatNumber($total_income_all_time) ?> - €<?= formatNumber($total_expenses_all_time) ?>
+                    <?php if ($total_debt_in > 0): ?>+ €<?= formatNumber($total_debt_in) ?><?php endif; ?>
+                    <?php if ($total_debt_out > 0): ?> - €<?= formatNumber($total_debt_out) ?><?php endif; ?>
+                        <?php if ($total_investment_value > 0): ?> + €<?= formatNumber($total_investment_value) ?><?php endif; ?>
+                            = <strong>€<?= formatNumber($total_wealth_with_investments) ?></strong>
+
+                            <?php if (!empty($due_recurring)): ?>
+                                <br><br>
+                                <strong>🔔 Fällige wiederkehrende Transaktionen:</strong><br>
+                                <?php foreach ($due_recurring as $due): ?>
+                                    • <?= htmlspecialchars($due['category_name']) ?>: €<?= number_format($due['amount'], 2, ',', '.') ?> (<?= date('d.m.Y', strtotime($due['next_due_date'])) ?>)<br>
+                                <?php endforeach; ?>
+                                <a href="modules/recurring/index.php" style="color: var(--clr-primary-a20);">→ Wiederkehrende Transaktionen verwalten</a>
+                            <?php endif; ?>
+                </div>
             </div>
         </main>
     </div>

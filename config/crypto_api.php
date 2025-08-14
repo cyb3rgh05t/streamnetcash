@@ -233,7 +233,8 @@ class CryptoAPI
             'SOL' => 'solana',
             'MATIC' => 'matic-network',
             'AVAX' => 'avalanche-2',
-            'TRX' => 'tron'
+            'TRX' => 'tron',
+            'XMR' => 'monero'  // ← FIX: XMR (Monero) hinzugefügt
         ];
 
         return $symbol_map[strtoupper($symbol)] ?? strtolower($symbol);
@@ -308,12 +309,17 @@ class CryptoAPI
             return false;
         }
 
-        $entry = $cache_data[$key];
-        if (time() - $entry['timestamp'] > $max_age) {
+        $data = $cache_data[$key];
+        if (!isset($data['timestamp']) || !isset($data['data'])) {
             return false;
         }
 
-        return $entry['data'];
+        // Check if cache is still valid
+        if (time() - $data['timestamp'] > $max_age) {
+            return false;
+        }
+
+        return $data['data'];
     }
 
     /**
@@ -321,22 +327,37 @@ class CryptoAPI
      * @param string $key
      * @param mixed $data
      * @param int $max_age
+     * @return bool
      */
     private function saveToCache($key, $data, $max_age = null)
     {
         $max_age = $max_age ?? $this->cache_duration;
         $cache_file = dirname(__DIR__) . '/' . $this->cache_file;
 
+        // Read existing cache
         $cache_data = [];
         if (file_exists($cache_file)) {
-            $cache_data = json_decode(file_get_contents($cache_file), true) ?: [];
+            $existing_cache = json_decode(file_get_contents($cache_file), true);
+            if ($existing_cache) {
+                $cache_data = $existing_cache;
+            }
         }
 
+        // Add new data
         $cache_data[$key] = [
             'timestamp' => time(),
             'data' => $data
         ];
 
-        file_put_contents($cache_file, json_encode($cache_data));
+        // Clean old entries (keep only last 100 entries to prevent cache bloat)
+        if (count($cache_data) > 100) {
+            // Sort by timestamp and keep only newest 50
+            uasort($cache_data, function ($a, $b) {
+                return $b['timestamp'] <=> $a['timestamp'];
+            });
+            $cache_data = array_slice($cache_data, 0, 50, true);
+        }
+
+        return file_put_contents($cache_file, json_encode($cache_data)) !== false;
     }
 }

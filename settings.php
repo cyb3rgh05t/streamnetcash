@@ -262,9 +262,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="app-layout">
         <aside class="sidebar">
-            <div style="padding: 20px; border-bottom: 1px solid var(--clr-surface-a20); margin-bottom: 20px;">
-                <h2 style="color: var(--clr-primary-a20);">StreamNet Finance</h2>
-                <p style="color: var(--clr-surface-a50); font-size: 14px;">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
+            <div class="sidebar-header">
+                <a class="sidebar-logo">
+                    <img src="/assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
+
+                </a>
+                <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
 
             <nav>

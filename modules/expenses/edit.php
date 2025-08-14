@@ -128,6 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/expenses.css">
+    <link rel="stylesheet" href="../../assets/css/sidebar.css">
 
 </head>
 

@@ -95,6 +95,7 @@ $page_color = $debt_type === 'debt_out' ? '#f97316' : '#22c55e';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/debt.css">
+    <link rel="stylesheet" href="../../assets/css/sidebar.css">
 </head>
 
 <body>

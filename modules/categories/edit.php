@@ -175,6 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/categories.css">
+    <link rel="stylesheet" href="../../assets/css/sidebar.css">
 </head>
 
 <body>

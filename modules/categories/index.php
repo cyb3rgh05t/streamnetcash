@@ -88,6 +88,7 @@ if (isset($_SESSION['error'])) {
         referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/categories.css">
+    <link rel="stylesheet" href="../../assets/css/sidebar.css">
 </head>
 
 <body>

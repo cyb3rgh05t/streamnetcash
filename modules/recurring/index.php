@@ -95,6 +95,7 @@ $frequency_labels = [
         referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/recurring.css">
+    <link rel="stylesheet" href="../../assets/css/sidebar.css">
 </head>
 
 <body>

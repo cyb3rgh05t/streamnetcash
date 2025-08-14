@@ -60,6 +60,7 @@ if (!empty($total_stats['api_error'])) {
         referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/investments.css">
+    <link rel="stylesheet" href="../../assets/css/sidebar.css">
 
     <style>
         .alert-warning {

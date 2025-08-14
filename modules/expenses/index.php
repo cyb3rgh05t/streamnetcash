@@ -84,6 +84,7 @@ if (isset($_SESSION['error'])) {
         referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/expenses.css">
+    <link rel="stylesheet" href="../../assets/css/sidebar.css">
 
 </head>
 
@@ -101,7 +102,7 @@ if (isset($_SESSION['error'])) {
             <nav>
                 <ul class="sidebar-nav">
                     <li><a href="../../dashboard.php"><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</a></li>
-                    <li><a href="../expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
+                    <li><a href="../expenses/index.php" class="active"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
                     <li><a href="../income/index.php"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahmen</a></li>
                     <li><a href="../debts/index.php" class="<?= strpos($_SERVER['PHP_SELF'], 'debts') ? 'active' : '' ?>">
                             <i class="fa-solid fa-handshake"></i>&nbsp;&nbsp;Schulden

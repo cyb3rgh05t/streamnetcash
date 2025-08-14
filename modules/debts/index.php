@@ -132,8 +132,8 @@ if (isset($_SESSION['error'])) {
                     <p style="color: var(--clr-surface-a50);">Verwalte Geldleihen zwischen Firma und Privatpersonen</p>
                 </div>
                 <div style="display: flex; gap: 12px;">
-                    <a href="add.php?type=debt_out" class="btn btn-secondary">💸 Geld verleihen</a>
-                    <a href="add.php?type=debt_in" class="btn">💰 Geld leihen</a>
+                    <a href="add.php?type=debt_out" class="btn btn-secondary">+ Geld verleihen</a>
+                    <a href="add.php?type=debt_in" class="btn">+ Geld erhalten / leihen</a>
                 </div>
             </div>
 
@@ -142,19 +142,19 @@ if (isset($_SESSION['error'])) {
             <!-- Stats Cards -->
             <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 30px;">
                 <div class="stat-card">
-                    <div class="stat-icon">💸</div>
+
                     <div class="stat-value expense">€<?= number_format($total_outgoing, 2, ',', '.') ?></div>
                     <div class="stat-label">Verliehenes Geld</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon">💰</div>
+
                     <div class="stat-value income">€<?= number_format($total_incoming, 2, ',', '.') ?></div>
                     <div class="stat-label">Erhaltenes Geld</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon">⚖️</div>
+
                     <div class="stat-value <?= $net_position >= 0 ? 'income' : 'expense' ?>">
                         €<?= number_format($net_position, 2, ',', '.') ?>
                     </div>
@@ -185,7 +185,7 @@ if (isset($_SESSION['error'])) {
                         <div class="empty-state">
                             <h3>Keine Darlehen vergeben</h3>
                             <p>Du hast in diesem Monat kein Geld verliehen.</p>
-                            <a href="add.php?type=debt_out" class="btn btn-small">💸 Geld verleihen</a>
+                            <a href="add.php?type=debt_out" class="btn btn-small">+ Geld verleihen</a>
                         </div>
                     <?php else: ?>
                         <div class="transaction-list">
@@ -209,10 +209,10 @@ if (isset($_SESSION['error'])) {
                                         -€<?= number_format($debt['amount'], 2, ',', '.') ?>
                                     </div>
                                     <div class="transaction-actions">
-                                        <a href="edit.php?id=<?= $debt['id'] ?>" class="btn btn-icon">✏️</a>
+                                        <a href="edit.php?id=<?= $debt['id'] ?>" class="btn btn-icon btn-edit"><i class="fa-solid fa-pen-to-square"></i></a>
                                         <a href="delete.php?id=<?= $debt['id'] ?>"
-                                            onclick="return confirm('Sicher löschen?')"
-                                            class="btn btn-icon btn-delete">🗑️</a>
+                                            ('Sicher löschen?')"
+                                            class="btn btn-icon btn-delete"><i class="fa-solid fa-trash-can"></i></a>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -230,7 +230,7 @@ if (isset($_SESSION['error'])) {
                         <div class="empty-state">
                             <h3>Kein Geld erhalten</h3>
                             <p>Du hast in diesem Monat kein Geld geliehen bekommen.</p>
-                            <a href="add.php?type=debt_in" class="btn btn-small">💰 Geld leihen</a>
+                            <a href="add.php?type=debt_in" class="btn btn-small">+ Geld erhalten / leihen</a>
                         </div>
                     <?php else: ?>
                         <div class="transaction-list">
@@ -254,10 +254,10 @@ if (isset($_SESSION['error'])) {
                                         +€<?= number_format($debt['amount'], 2, ',', '.') ?>
                                     </div>
                                     <div class="transaction-actions">
-                                        <a href="edit.php?id=<?= $debt['id'] ?>" class="btn btn-icon">✏️</a>
+                                        <a href="edit.php?id=<?= $debt['id'] ?>" class="btn btn-icon btn-edit"><i class="fa-solid fa-pen-to-square"></i></a>
                                         <a href="delete.php?id=<?= $debt['id'] ?>"
-                                            onclick="return confirm('Sicher löschen?')"
-                                            class="btn btn-icon btn-delete">🗑️</a>
+
+                                            class="btn btn-icon btn-delete"> <i class="fa-solid fa-trash-can"></i></a>
                                     </div>
                                 </div>
                             <?php endforeach; ?>

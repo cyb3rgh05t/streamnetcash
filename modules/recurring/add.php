@@ -141,7 +141,7 @@ $form_data = [
             <div class="sidebar-header">
                 <a class="sidebar-logo">
                     <img src="../../assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                    <h2 class="sidebar-logo-text">StreamNet Finance</h2>
+
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
@@ -204,7 +204,7 @@ $form_data = [
                                     <select id="category_id" name="category_id" class="form-select" required onchange="updatePreview()">
                                         <option value="">Kategorie wählen...</option>
                                         <?php if (!empty($income_categories)): ?>
-                                            <optgroup label="💰 Einnahmen">
+                                            <optgroup label="<i class=" fa-solid fa-sack-dollar"></i> Einnahmen">
                                                 <?php foreach ($income_categories as $category): ?>
                                                     <option value="<?= $category['id'] ?>"
                                                         data-icon="<?= htmlspecialchars($category['icon']) ?>"
@@ -217,7 +217,7 @@ $form_data = [
                                             </optgroup>
                                         <?php endif; ?>
                                         <?php if (!empty($expense_categories)): ?>
-                                            <optgroup label="💸 Ausgaben">
+                                            <optgroup label="<i class=" fa-solid fa-money-bill-wave"></i> Ausgaben">
                                                 <?php foreach ($expense_categories as $category): ?>
                                                     <option value="<?= $category['id'] ?>"
                                                         data-icon="<?= htmlspecialchars($category['icon']) ?>"
@@ -357,7 +357,7 @@ $form_data = [
 
                                 <div class="form-actions">
                                     <a href="index.php" class="btn btn-cancel">Abbrechen</a>
-                                    <button type="submit" class="btn">💾 Wiederkehrende Transaktion erstellen</button>
+                                    <button type="submit" class="btn"><i class="fa-solid fa-floppy-disk"></i> Wiederkehrende Transaktion erstellen</button>
                                 </div>
                             </form>
                         <?php endif; ?>

@@ -114,7 +114,7 @@ $form_data = [
             <div class="sidebar-header">
                 <a class="sidebar-logo">
                     <img src="../../assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                    <h2 class="sidebar-logo-text">StreamNet Finance</h2>
+
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
@@ -144,7 +144,7 @@ $form_data = [
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">💸 Neue Ausgabe</h1>
+                    <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;"><i class="fa-solid fa-money-bill-wave"></i> Neue Ausgabe</h1>
                     <p style="color: var(--clr-surface-a50);">Füge eine neue Ausgabe zur gemeinsamen Datenbank hinzu</p>
                 </div>
                 <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
@@ -222,7 +222,7 @@ $form_data = [
 
                             <div class="form-actions">
                                 <a href="index.php" class="btn btn-cancel">Abbrechen</a>
-                                <button type="submit" class="btn">💾 Ausgabe speichern</button>
+                                <button type="submit" class="btn"><i class="fa-solid fa-floppy-disk"></i> Ausgabe speichern</button>
                             </div>
                         </form>
                     <?php endif; ?>

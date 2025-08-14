@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="sidebar-header">
                 <a class="sidebar-logo">
                     <img src="../../assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                    <h2 class="sidebar-logo-text">StreamNet Finance</h2>
+
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
@@ -226,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <?php endforeach; ?>
                             </select>
                             <div id="categoryPreview" class="category-preview">
-                                <span class="category-icon" id="previewIcon">💰</span>
+                                <span class="category-icon" id="previewIcon"><i class="fa-solid fa-sack-dollar"></i></span>
                                 <span class="category-name" id="previewName">Kategorie</span>
                             </div>
                         </div>
@@ -262,9 +262,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="form-actions">
                             <a href="index.php" class="btn btn-cancel">Abbrechen</a>
-                            <a href="delete.php?id=<?= $income['id'] ?>" class="btn btn-delete"
-                                onclick="return confirm('Einnahme wirklich löschen?')">🗑️ Löschen</a>
-                            <button type="submit" class="btn btn-income">💾 Änderungen speichern</button>
+                            <a href="delete.php?id=<?= $income['id'] ?>" class="btn btn-delete"> <i class="fa-solid fa-trash-can"></i> Löschen</a>
+                            <button type="submit" class="btn btn-income"><i class="fa-solid fa-floppy-disk"></i> Änderungen speichern</button>
                         </div>
                     </form>
                 </div>

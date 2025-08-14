@@ -18,38 +18,152 @@ if (!isset($_SESSION['form_token'])) {
     $_SESSION['form_token'] = bin2hex(random_bytes(32));
 }
 
-// Vordefinierte Icons und Farben
+// FontAwesome Icons statt Emojis
 $predefined_icons = [
-    '💰',
-    '💼',
-    '💻',
-    '📈',
-    '🏆',
-    '🎁',
-    '🏠',
-    '🚗',
-    '🛒',
-    '🍕',
-    '⛽',
-    '💊',
-    '👕',
-    '📱',
-    '🎬',
-    '🎮',
-    '📚',
-    '✈️',
-    '🏥',
-    '💡',
-    '🔧',
-    '🧽',
-    '🎓',
-    '🍕',
-    '🌟',
-    '💳',
-    '📊',
-    '🎯',
-    '📁',
-    '☕'
+    // 💰 Finanzen & Business
+    '<i class="fa-solid fa-sack-dollar"></i>',
+    '<i class="fa-solid fa-briefcase"></i>',
+    '<i class="fa-solid fa-chart-line"></i>',
+    '<i class="fa-solid fa-chart-bar"></i>',
+    '<i class="fa-solid fa-credit-card"></i>',
+    '<i class="fa-solid fa-coins"></i>',
+    '<i class="fa-solid fa-building"></i>',
+    '<i class="fa-solid fa-handshake"></i>',
+    '<i class="fa-solid fa-piggy-bank"></i>',
+    '<i class="fa-solid fa-receipt"></i>',
+    '<i class="fa-solid fa-calculator"></i>',
+    '<i class="fa-solid fa-percent"></i>',
+
+    // 🏠 Haushalt & Leben
+    '<i class="fa-solid fa-house"></i>',
+    '<i class="fa-solid fa-bed"></i>',
+    '<i class="fa-solid fa-couch"></i>',
+    '<i class="fa-solid fa-shower"></i>',
+    '<i class="fa-solid fa-toilet"></i>',
+    '<i class="fa-solid fa-broom"></i>',
+    '<i class="fa-solid fa-soap"></i>',
+    '<i class="fa-solid fa-lightbulb"></i>',
+    '<i class="fa-solid fa-plug"></i>',
+    '<i class="fa-solid fa-wrench"></i>',
+    '<i class="fa-solid fa-hammer"></i>',
+    '<i class="fa-solid fa-paint-roller"></i>',
+
+    // 🚗 Transport & Reisen
+    '<i class="fa-solid fa-car"></i>',
+    '<i class="fa-solid fa-bicycle"></i>',
+    '<i class="fa-solid fa-train"></i>',
+    '<i class="fa-solid fa-bus"></i>',
+    '<i class="fa-solid fa-plane"></i>',
+    '<i class="fa-solid fa-ship"></i>',
+    '<i class="fa-solid fa-motorcycle"></i>',
+    '<i class="fa-solid fa-gas-pump"></i>',
+    '<i class="fa-solid fa-parking"></i>',
+    '<i class="fa-solid fa-taxi"></i>',
+    '<i class="fa-solid fa-map-location-dot"></i>',
+    '<i class="fa-solid fa-suitcase"></i>',
+
+    // 🛒 Shopping & Lifestyle
+    '<i class="fa-solid fa-cart-shopping"></i>',
+    '<i class="fa-solid fa-bag-shopping"></i>',
+    '<i class="fa-solid fa-store"></i>',
+    '<i class="fa-solid fa-shirt"></i>',
+    '<i class="fa-solid fa-gem"></i>',
+    '<i class="fa-solid fa-glasses"></i>',
+    '<i class="fa-solid fa-watch"></i>',
+    '<i class="fa-solid fa-shoe-prints"></i>',
+    '<i class="fa-solid fa-scissors"></i>',
+    '<i class="fa-solid fa-spray-can"></i>',
+
+    // 🍕 Essen & Trinken
+    '<i class="fa-solid fa-pizza-slice"></i>',
+    '<i class="fa-solid fa-burger"></i>',
+    '<i class="fa-solid fa-utensils"></i>',
+    '<i class="fa-solid fa-mug-hot"></i>',
+    '<i class="fa-solid fa-wine-glass"></i>',
+    '<i class="fa-solid fa-beer"></i>',
+    '<i class="fa-solid fa-ice-cream"></i>',
+    '<i class="fa-solid fa-cookie"></i>',
+    '<i class="fa-solid fa-apple-whole"></i>',
+    '<i class="fa-solid fa-carrot"></i>',
+    '<i class="fa-solid fa-fish"></i>',
+    '<i class="fa-solid fa-cheese"></i>',
+
+    // 📱 Technologie
+    '<i class="fa-solid fa-laptop"></i>',
+    '<i class="fa-solid fa-mobile-screen"></i>',
+    '<i class="fa-solid fa-desktop"></i>',
+    '<i class="fa-solid fa-tablet"></i>',
+    '<i class="fa-solid fa-headphones"></i>',
+    '<i class="fa-solid fa-camera"></i>',
+    '<i class="fa-solid fa-tv"></i>',
+    '<i class="fa-solid fa-gamepad"></i>',
+    '<i class="fa-solid fa-wifi"></i>',
+    '<i class="fa-solid fa-phone"></i>',
+    '<i class="fa-solid fa-microchip"></i>',
+    '<i class="fa-solid fa-keyboard"></i>',
+
+    // 🏥 Gesundheit & Wellness
+    '<i class="fa-solid fa-hospital"></i>',
+    '<i class="fa-solid fa-pills"></i>',
+    '<i class="fa-solid fa-stethoscope"></i>',
+    '<i class="fa-solid fa-heart-pulse"></i>',
+    '<i class="fa-solid fa-tooth"></i>',
+    '<i class="fa-solid fa-eye"></i>',
+    '<i class="fa-solid fa-dumbbell"></i>',
+    '<i class="fa-solid fa-spa"></i>',
+    '<i class="fa-solid fa-leaf"></i>',
+
+    // 🎓 Bildung & Arbeit
+    '<i class="fa-solid fa-graduation-cap"></i>',
+    '<i class="fa-solid fa-book"></i>',
+    '<i class="fa-solid fa-pen"></i>',
+    '<i class="fa-solid fa-chalkboard"></i>',
+    '<i class="fa-solid fa-microscope"></i>',
+    '<i class="fa-solid fa-flask"></i>',
+
+    // 🎬 Entertainment
+    '<i class="fa-solid fa-film"></i>',
+    '<i class="fa-solid fa-music"></i>',
+    '<i class="fa-solid fa-masks-theater"></i>',
+    '<i class="fa-solid fa-ticket"></i>',
+    '<i class="fa-solid fa-guitar"></i>',
+    '<i class="fa-solid fa-headphones"></i>',
+
+    // 🏆 Sport & Freizeit
+    '<i class="fa-solid fa-trophy"></i>',
+    '<i class="fa-solid fa-football"></i>',
+    '<i class="fa-solid fa-basketball"></i>',
+    '<i class="fa-solid fa-baseball"></i>',
+    '<i class="fa-solid fa-golf-ball-tee"></i>',
+    '<i class="fa-solid fa-tennis-ball"></i>',
+    '<i class="fa-solid fa-volleyball"></i>',
+    '<i class="fa-solid fa-chess"></i>',
+
+    // 🐕 Tiere & Natur
+    '<i class="fa-solid fa-dog"></i>',
+    '<i class="fa-solid fa-cat"></i>',
+    '<i class="fa-solid fa-fish"></i>',
+    '<i class="fa-solid fa-bird"></i>',
+    '<i class="fa-solid fa-tree"></i>',
+    '<i class="fa-solid fa-seedling"></i>',
+
+    // ⭐ Verschiedenes
+    '<i class="fa-solid fa-star"></i>',
+    '<i class="fa-solid fa-gift"></i>',
+    '<i class="fa-solid fa-heart"></i>',
+    '<i class="fa-solid fa-fire"></i>',
+    '<i class="fa-solid fa-sun"></i>',
+    '<i class="fa-solid fa-moon"></i>',
+    '<i class="fa-solid fa-cloud"></i>',
+    '<i class="fa-solid fa-umbrella"></i>',
+    '<i class="fa-solid fa-key"></i>',
+    '<i class="fa-solid fa-lock"></i>',
+    '<i class="fa-solid fa-bell"></i>',
+    '<i class="fa-solid fa-flag"></i>',
+    '<i class="fa-solid fa-bullseye"></i>',
+    '<i class="fa-solid fa-rocket"></i>',
+    '<i class="fa-solid fa-globe"></i>',
+    '<i class="fa-solid fa-folder"></i>'
 ];
 
 $predefined_colors = [
@@ -162,7 +276,7 @@ if (!isset($_SESSION['form_token'])) {
 $form_data = [
     'name' => $_POST['name'] ?? '',
     'type' => $_POST['type'] ?? ($_GET['type'] ?? ''),
-    'icon' => $_POST['icon'] ?? '📁',
+    'icon' => $_POST['icon'] ?? '<i class="fa-solid fa-folder"></i>',
     'color' => $_POST['color'] ?? '#e6a309'
 ];
 ?>
@@ -268,7 +382,7 @@ $form_data = [
                                             class="type-radio" <?= $form_data['type'] === 'income' ? 'checked' : '' ?>
                                             onchange="updatePreview()">
                                         <label for="type_income" class="type-label">
-                                            <div class="type-icon">💰</div>
+                                            <div class="type-icon"><i class="fa-solid fa-sack-dollar"></i></div>
                                             <div class="type-name">Einnahme</div>
                                         </label>
                                     </div>
@@ -277,7 +391,7 @@ $form_data = [
                                             class="type-radio" <?= $form_data['type'] === 'expense' ? 'checked' : '' ?>
                                             onchange="updatePreview()">
                                         <label for="type_expense" class="type-label">
-                                            <div class="type-icon">💸</div>
+                                            <div class="type-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
                                             <div class="type-name">Ausgabe</div>
                                         </label>
                                     </div>
@@ -287,7 +401,7 @@ $form_data = [
                                             class="type-radio" <?= $form_data['type'] === 'debt_in' ? 'checked' : '' ?>
                                             onchange="updatePreview()">
                                         <label for="type_debt_in" class="type-label">
-                                            <div class="type-icon">🔄</div>
+                                            <div class="type-icon"><i class="fa-solid fa-arrow-left"></i></div>
                                             <div class="type-name">Schuld Eingang</div>
                                         </label>
                                     </div>
@@ -296,7 +410,7 @@ $form_data = [
                                             class="type-radio" <?= $form_data['type'] === 'debt_out' ? 'checked' : '' ?>
                                             onchange="updatePreview()">
                                         <label for="type_debt_out" class="type-label">
-                                            <div class="type-icon">📤</div>
+                                            <div class="type-icon"><i class="fa-solid fa-arrow-right"></i></div>
                                             <div class="type-name">Schuld Ausgang</div>
                                         </label>
                                     </div>
@@ -309,11 +423,11 @@ $form_data = [
                             <div class="icon-selector">
                                 <?php foreach ($predefined_icons as $icon): ?>
                                     <div class="icon-option">
-                                        <input type="radio" id="icon_<?= urlencode($icon) ?>" name="icon" value="<?= htmlspecialchars($icon) ?>"
+                                        <input type="radio" id="icon_<?= md5($icon) ?>" name="icon" value="<?= htmlspecialchars($icon) ?>"
                                             class="icon-radio" <?= $form_data['icon'] === $icon ? 'checked' : '' ?>
                                             onchange="updatePreview()">
-                                        <label for="icon_<?= urlencode($icon) ?>" class="icon-label">
-                                            <?= htmlspecialchars($icon) ?>
+                                        <label for="icon_<?= md5($icon) ?>" class="icon-label">
+                                            <?= $icon ?>
                                         </label>
                                     </div>
                                 <?php endforeach; ?>
@@ -339,7 +453,7 @@ $form_data = [
                             <div class="preview-title">👁 Vorschau</div>
                             <div class="category-preview">
                                 <div class="preview-icon" id="previewIcon" style="background-color: <?= htmlspecialchars($form_data['color']) ?>;">
-                                    <?= htmlspecialchars($form_data['icon']) ?>
+                                    <?= $form_data['icon'] ?>
                                 </div>
                                 <div class="preview-name" id="previewName">
                                     <?= htmlspecialchars($form_data['name']) ?: 'Kategorie-Name' ?>
@@ -349,7 +463,7 @@ $form_data = [
 
                         <div class="form-actions">
                             <a href="index.php" class="btn btn-cancel">Abbrechen</a>
-                            <button type="submit" class="btn" id="submitBtn">💾 Kategorie erstellen</button>
+                            <button type="submit" class="btn" id="submitBtn"><i class="fa-solid fa-floppy-disk"></i> Kategorie erstellen</button>
                         </div>
                     </form>
                 </div>
@@ -394,7 +508,7 @@ $form_data = [
             document.getElementById('previewName').textContent = name;
 
             if (selectedIcon) {
-                document.getElementById('previewIcon').textContent = selectedIcon.value;
+                document.getElementById('previewIcon').innerHTML = selectedIcon.value;
             }
 
             if (selectedColor) {

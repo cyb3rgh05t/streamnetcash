@@ -184,12 +184,11 @@ if (isset($_SESSION['error'])) {
                                     </div>
 
                                     <div class="category-actions">
-                                        <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
+                                        <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten"><i class="fa-solid fa-pen-to-square"></i></a>
                                         <?php if ($category['stats']['transaction_count'] == 0): ?>
-                                            <a href="delete.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-delete"
-                                                onclick="return confirm('Kategorie wirklich löschen? Dies betrifft alle User!')" title="Löschen">🗑️</a>
+                                            <a href="delete.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-delete"> <i class="fa-solid fa-trash-can"></i></a>
                                         <?php else: ?>
-                                            <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden">🔒</button>
+                                            <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden"> <i class="fa-solid fa-lock"></i></button>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -245,12 +244,12 @@ if (isset($_SESSION['error'])) {
                                     </div>
 
                                     <div class="category-actions">
-                                        <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
+                                        <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten"><i class="fa-solid fa-pen-to-square"></i></a>
                                         <?php if ($category['stats']['transaction_count'] == 0): ?>
                                             <a href="delete.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-delete"
-                                                onclick="return confirm('Kategorie wirklich löschen? Dies betrifft alle User!')" title="Löschen">🗑️</a>
+                                                ('Kategorie wirklich löschen? Dies betrifft alle User!')" title="Löschen"><i class="fa-solid fa-trash-can"></i></a>
                                         <?php else: ?>
-                                            <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden">🔒</button>
+                                            <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden"> <i class="fa-solid fa-lock"></i></button>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -306,12 +305,12 @@ if (isset($_SESSION['error'])) {
                                     </div>
 
                                     <div class="category-actions">
-                                        <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
+                                        <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten"><i class="fa-solid fa-pen-to-square"></i></a>
                                         <?php if ($category['stats']['transaction_count'] == 0): ?>
                                             <a href="delete.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-delete"
-                                                onclick="return confirm('Kategorie wirklich löschen? Dies betrifft alle User!')" title="Löschen">🗑️</a>
+                                                ('Kategorie wirklich löschen? Dies betrifft alle User!')" title="Löschen"><i class="fa-solid fa-trash-can"></i></a>
                                         <?php else: ?>
-                                            <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden">🔒</button>
+                                            <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden"> <i class="fa-solid fa-lock"></i></button>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -367,12 +366,11 @@ if (isset($_SESSION['error'])) {
                                     </div>
 
                                     <div class="category-actions">
-                                        <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
+                                        <a href="edit.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten"><i class="fa-solid fa-pen-to-square"></i></a>
                                         <?php if ($category['stats']['transaction_count'] == 0): ?>
-                                            <a href="delete.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-delete"
-                                                onclick="return confirm('Kategorie wirklich löschen? Dies betrifft alle User!')" title="Löschen">🗑️</a>
+                                            <a href="delete.php?id=<?= $category['id'] ?>" class="btn btn-icon btn-delete"><i class="fa-solid fa-trash-can"></i></a>
                                         <?php else: ?>
-                                            <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden">🔒</button>
+                                            <button class="btn btn-icon btn-delete" disabled title="Kategorie wird verwendet und kann nicht gelöscht werden"> <i class="fa-solid fa-lock"></i></button>
                                         <?php endif; ?>
                                     </div>
                                 </div>

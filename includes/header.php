@@ -30,10 +30,10 @@ if (!isset($_SESSION['user_id'])) {
                             📊 Dashboard
                         </a></li>
                     <li><a href="modules/expenses/index.php" class="<?= strpos($_SERVER['PHP_SELF'], 'expenses') ? 'active' : '' ?>">
-                            💸 Ausgaben
+                            <i class="fa-solid fa-money-bill-wave"></i> Ausgaben
                         </a></li>
                     <li><a href="modules/income/index.php" class="<?= strpos($_SERVER['PHP_SELF'], 'income') ? 'active' : '' ?>">
-                            💰 Einnahmen
+                            <i class="fa-solid fa-sack-dollar"></i> Einnahmen
                         </a></li>
                     <li><a href="modules/categories/index.php" class="<?= strpos($_SERVER['PHP_SELF'], 'categories') ? 'active' : '' ?>">
                             🏷️ Kategorien

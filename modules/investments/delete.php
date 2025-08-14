@@ -91,8 +91,8 @@ $profit_loss = $current_value - $purchase_value;
             <nav>
                 <ul class="sidebar-nav">
                     <li><a href="../../dashboard.php">📊 Dashboard</a></li>
-                    <li><a href="../expenses/index.php">💸 Ausgaben</a></li>
-                    <li><a href="../income/index.php">💰 Einnahmen</a></li>
+                    <li><a href="../expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i> Ausgaben</a></li>
+                    <li><a href="../income/index.php"><i class="fa-solid fa-sack-dollar"></i> Einnahmen</a></li>
                     <li><a href="../recurring/index.php">🔄 Wiederkehrend</a></li>
                     <li><a href="index.php" class="active">📈 Investments</a></li>
                     <li><a href="../categories/index.php">🏷️ Kategorien</a></li>
@@ -107,7 +107,7 @@ $profit_loss = $current_value - $purchase_value;
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 style="color: #f87171; margin-bottom: 5px;">🗑️ Investment löschen</h1>
+                    <h1 style="color: #f87171; margin-bottom: 5px;"><i class="fa-solid fa-trash-can"></i> Investment löschen</h1>
                     <p style="color: var(--clr-surface-a50);">Bestätige das Löschen deines Investments</p>
                 </div>
                 <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
@@ -170,9 +170,8 @@ $profit_loss = $current_value - $purchase_value;
                     <form method="POST" class="delete-form">
                         <div class="form-actions">
                             <a href="index.php" class="btn btn-secondary">Abbrechen</a>
-                            <button type="submit" name="confirm_delete" class="btn btn-danger"
-                                onclick="return confirm('Investment wirklich unwiderruflich löschen?')">
-                                🗑️ Endgültig löschen
+                            <button type="submit" name="confirm_delete" class="btn btn-danger">
+                                <i class="fa-solid fa-trash-can"></i> Endgültig löschen
                             </button>
                         </div>
                     </form>
@@ -180,7 +179,7 @@ $profit_loss = $current_value - $purchase_value;
                     <div class="alternative-actions">
                         <p><strong>Alternativen:</strong></p>
                         <p>
-                            <a href="edit.php?id=<?= $investment['id'] ?>" class="btn btn-small">✏️ Investment bearbeiten</a>
+                            <a href="edit.php?id=<?= $investment['id'] ?>" class="btn btn-small"><i class="fa-solid fa-pen-to-square"></i> Investment bearbeiten</a>
                             statt löschen - falls du nur die Daten korrigieren möchtest.
                         </p>
                     </div>

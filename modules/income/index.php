@@ -187,7 +187,7 @@ if (isset($_SESSION['error'])) {
             <div class="income-table">
                 <?php if (empty($incomes)): ?>
                     <div class="empty-state">
-                        <h3>💰 Noch keine Einnahmen</h3>
+                        <h3><i class="fa-solid fa-sack-dollar"></i> Noch keine Einnahmen</h3>
                         <p>Füge deine erste Einnahme hinzu, um hier eine Übersicht zu sehen.</p>
                         <div style="margin-top: 20px;">
                             <a href="add.php" class="btn">Erste Einnahme hinzufügen</a>
@@ -226,9 +226,8 @@ if (isset($_SESSION['error'])) {
                             </div>
 
                             <div class="actions">
-                                <a href="edit.php?id=<?= $income['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
-                                <a href="delete.php?id=<?= $income['id'] ?>" class="btn btn-icon btn-delete"
-                                    onclick="return confirm('Einnahme wirklich löschen?')" title="Löschen">🗑️</a>
+                                <a href="edit.php?id=<?= $income['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten"><i class="fa-solid fa-pen-to-square"></i></a>
+                                <a href="delete.php?id=<?= $income['id'] ?>" class="btn btn-icon btn-delete"> <i class="fa-solid fa-trash-can"></i></a>
                             </div>
                         </div>
                     <?php endforeach; ?>

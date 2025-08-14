@@ -238,8 +238,8 @@ class Database
             ['name' => 'Gesundheit',  'type' => 'expense', 'color' => '#ef4444', 'icon' => '⚕️'],
 
             // Debt categories
-            ['name' => 'Firma → Privat', 'type' => 'debt_out', 'color' => '#fbbf24', 'icon' => '💸'],
-            ['name' => 'Privat → Firma', 'type' => 'debt_in',  'color' => '#22c55e', 'icon' => '💰'],
+            ['name' => 'Firma → Privat', 'type' => 'debt_out', 'color' => '#fbbf24', 'icon' => '<i class="fa-solid fa-money-bill-wave"></i>'],
+            ['name' => 'Privat → Firma', 'type' => 'debt_in',  'color' => '#22c55e', 'icon' => '<i class="fa-solid fa-sack-dollar"></i>'],
             ['name' => 'Darlehen vergeben', 'type' => 'debt_out', 'color' => '#f97316', 'icon' => '🤝'],
             ['name' => 'Darlehen erhalten', 'type' => 'debt_in',  'color' => '#3b82f6', 'icon' => '🏦'],
         ];

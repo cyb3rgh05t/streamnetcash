@@ -189,37 +189,7 @@ if (!empty($total_stats['api_error'])) {
 
             <?= $message ?>
 
-            <!-- API Status Message -->
-            <?= $api_status_message ?>
 
-            <!-- System Status -->
-            <div class="system-status">
-                <div class="status-item">
-                    <span><strong>🔌 API-Status:</strong></span>
-                    <span>
-                        <?php
-                        require_once '../../config/crypto_api.php';
-                        $crypto_api = new CryptoAPI();
-                        if ($crypto_api->isApiAvailable()): ?>
-                            <span class="status-indicator online">✅ CoinGecko erreichbar</span>
-                        <?php else: ?>
-                            <span class="status-indicator offline">❌ CoinGecko nicht erreichbar</span>
-                        <?php endif; ?>
-                    </span>
-                </div>
-                <div class="status-item">
-                    <span><strong>💹 Preisdaten:</strong></span>
-                    <span>
-                        <?php if ($total_stats['data_status'] === 'current'): ?>
-                            <span class="status-indicator online">Live-Preise aktiv</span>
-                        <?php elseif ($total_stats['data_status'] === 'partial_data'): ?>
-                            <span class="status-indicator offline">Teilweise verfügbar</span>
-                        <?php else: ?>
-                            <span class="status-indicator offline">Nicht verfügbar</span>
-                        <?php endif; ?>
-                    </span>
-                </div>
-            </div>
 
             <!-- Investment Stats -->
             <?php if (!empty($investments)): ?>
@@ -353,9 +323,8 @@ if (!empty($total_stats['api_error'])) {
                             </div>
 
                             <div class="actions">
-                                <a href="edit.php?id=<?= $investment['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
-                                <a href="delete.php?id=<?= $investment['id'] ?>" class="btn btn-icon btn-delete"
-                                    onclick="return confirm('Investment wirklich löschen?')" title="Löschen">🗑️</a>
+                                <a href="edit.php?id=<?= $investment['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten"><i class="fa-solid fa-pen-to-square"></i></a>
+                                <a href="delete.php?id=<?= $investment['id'] ?>" class="btn btn-icon btn-delete"> <i class="fa-solid fa-trash-can"></i></a>
                             </div>
 
                             <!-- API Error Details -->
@@ -369,6 +338,38 @@ if (!empty($total_stats['api_error'])) {
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
+            </div>
+
+            <!-- API Status Message -->
+            <?= $api_status_message ?>
+
+            <!-- System Status -->
+            <div style="margin-top: 20px;" class="system-status">
+                <div class="status-item">
+                    <span><strong>🔌 API-Status:</strong></span>
+                    <span>
+                        <?php
+                        require_once '../../config/crypto_api.php';
+                        $crypto_api = new CryptoAPI();
+                        if ($crypto_api->isApiAvailable()): ?>
+                            <span style="border-radius: 20px;" class="status-indicator online">✅ CoinGecko erreichbar</span>
+                        <?php else: ?>
+                            <span style="border-radius: 20px;" class="status-indicator offline">❌ CoinGecko nicht erreichbar</span>
+                        <?php endif; ?>
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span><strong>💹 Preisdaten:</strong></span>
+                    <span>
+                        <?php if ($total_stats['data_status'] === 'current'): ?>
+                            <span style="border-radius: 20px;" class="status-indicator online">Live-Preise aktiv</span>
+                        <?php elseif ($total_stats['data_status'] === 'partial_data'): ?>
+                            <span style="border-radius: 20px;" class="status-indicator offline">Teilweise verfügbar</span>
+                        <?php else: ?>
+                            <span style="border-radius: 20px;" class="status-indicator offline">Nicht verfügbar</span>
+                        <?php endif; ?>
+                    </span>
+                </div>
             </div>
 
             <!-- Info Box -->

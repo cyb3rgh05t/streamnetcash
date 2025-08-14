@@ -269,13 +269,12 @@ $frequency_labels = [
                             </div>
 
                             <div class="actions">
-                                <a href="edit.php?id=<?= $recurring['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten">✏️</a>
+                                <a href="edit.php?id=<?= $recurring['id'] ?>" class="btn btn-icon btn-edit" title="Bearbeiten"><i class="fa-solid fa-pen-to-square"></i></a>
                                 <a href="toggle.php?id=<?= $recurring['id'] ?>" class="btn btn-icon btn-toggle"
                                     title="<?= $recurring['is_active'] ? 'Pausieren' : 'Aktivieren' ?>">
-                                    <?= $recurring['is_active'] ? '⏸️' : '▶️' ?>
+                                    <?= $recurring['is_active'] ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>' ?>
                                 </a>
-                                <a href="delete.php?id=<?= $recurring['id'] ?>" class="btn btn-icon btn-delete"
-                                    onclick="return confirm('Wiederkehrende Transaktion wirklich löschen?')" title="Löschen">🗑️</a>
+                                <a href="delete.php?id=<?= $recurring['id'] ?>" class="btn btn-icon btn-delete"> <i class="fa-solid fa-trash-can"></i></a>
                             </div>
                         </div>
                     <?php endforeach; ?>

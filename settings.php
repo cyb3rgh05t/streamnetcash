@@ -134,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <!-- Startkapital Einstellungen -->
                 <div class="settings-card">
                     <div class="card-header">
-                        <div class="card-icon">💰</div>
+                        <div class="card-icon"><i class="fa-solid fa-sack-dollar"></i></div>
                         <div class="card-title">Startkapital</div>
                     </div>
 
@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         value="<?= number_format($current_starting_balance, 2, '.', '') ?>"
                                         placeholder="0,00" required>
                                 </div>
-                                <button type="submit" class="btn">💾 Speichern</button>
+                                <button type="submit" class="btn"><i class="fa-solid fa-floppy-disk"></i> Speichern</button>
                             </div>
                         </div>
                     </form>

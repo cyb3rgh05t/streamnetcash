@@ -220,7 +220,7 @@ $form_data = [
 
                         <div class="form-actions">
                             <a href="index.php" class="btn btn-cancel">Abbrechen</a>
-                            <button type="submit" class="btn">💾 Investment speichern</button>
+                            <button type="submit" class="btn"><i class="fa-solid fa-floppy-disk"></i> Investment speichern</button>
                         </div>
                     </form>
 

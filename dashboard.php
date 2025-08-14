@@ -160,7 +160,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 <div class="quick-actions">
                     <a href="modules/income/add.php" class="btn btn-primary">+ Einnahme</a>
                     <a href="modules/expenses/add.php" class="btn btn-secondary">+ Ausgabe</a>
-                    <a href="modules/debts/add.php?type=debt_in" class="btn" style="background: #22c55e; color: white;">+ Geld erhalten</a>
+                    <a href="modules/debts/add.php?type=debt_in" class="btn" style="background: #22c55e; color: white;">+ Geld erhalten / leihen</a>
                     <a href="modules/debts/add.php?type=debt_out" class="btn" style="background: #f97316; color: white;">+ Geld verleihen</a>
                     <a href="modules/investments/add.php" class="btn" style="background: #f59e0b; color: white;">+ Investment</a>
                 </div>
@@ -253,7 +253,7 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 <?php if ($total_debt_in_month > 0 || $total_debt_out_month > 0): ?>
                     <div class="stat-card">
                         <div class="stat-header">
-                            <div class="stat-icon">🤝</div>
+                            <div class="stat-icon"><i class="fa-solid fa-handshake"></i></div>
                             <div class="stat-title">Schulden-Saldo</div>
                         </div>
                         <div class="stat-value <?= $debt_balance_month >= 0 ? 'debt-positive' : 'debt-negative' ?>">

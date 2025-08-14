@@ -114,7 +114,7 @@ $form_data = [
             <div class="sidebar-header">
                 <a class="sidebar-logo">
                     <img src="../../assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                    <h2 class="sidebar-logo-text">StreamNet Finance</h2>
+
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
@@ -186,7 +186,7 @@ $form_data = [
                                     <?php endforeach; ?>
                                 </select>
                                 <div id="categoryPreview" class="category-preview">
-                                    <span class="category-icon" id="previewIcon">💰</span>
+                                    <span class="category-icon" id="previewIcon"><i class="fa-solid fa-sack-dollar"></i></span>
                                     <span class="category-name" id="previewName">Kategorie</span>
                                 </div>
                             </div>
@@ -222,7 +222,7 @@ $form_data = [
 
                             <div class="form-actions">
                                 <a href="index.php" class="btn btn-cancel">Abbrechen</a>
-                                <button type="submit" class="btn btn-income">💾 Einnahme speichern</button>
+                                <button type="submit" class="btn btn-income"><i class="fa-solid fa-floppy-disk"></i> Einnahme speichern</button>
                             </div>
                         </form>
                     <?php endif; ?>
@@ -237,7 +237,7 @@ $form_data = [
                         </ul>
 
                         <div class="income-examples">
-                            <h5>💰 Beispiele für Einnahmen:</h5>
+                            <h5><i class="fa-solid fa-sack-dollar"></i> Beispiele für Einnahmen:</h5>
                             <ul>
                                 <li onclick="fillExample('Gehalt Januar 2025')">Gehalt</li>
                                 <li onclick="fillExample('Freelance Projekt')">Freelancing</li>

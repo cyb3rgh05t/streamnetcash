@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         crossorigin="anonymous"
         referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
-    <link rel="stylesheet" href="../../assets/css/expenses.css">
+    <link rel="stylesheet" href="../../assets/css/income.css">
     <link rel="stylesheet" href="../../assets/css/sidebar.css">
 
 </head>
@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="sidebar-header">
                 <a class="sidebar-logo">
                     <img src="../../assets/images/logo.png" alt="StreamNet Finance Logo" class="sidebar-logo-image">
-                    <h2 class="sidebar-logo-text">StreamNet Finance</h2>
+
                 </a>
                 <p class="sidebar-welcome">Willkommen, <?= htmlspecialchars($_SESSION['username']) ?></p>
             </div>
@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;">✏️ Ausgabe bearbeiten</h1>
+                    <h1 style="color: var(--clr-primary-a20); margin-bottom: 5px;"><i class="fa-solid fa-pen-to-square"></i> Ausgabe bearbeiten</h1>
                     <p style="color: var(--clr-surface-a50);">Aktualisiere die Details dieser Ausgabe - Sichtbar für alle User</p>
                 </div>
                 <a href="index.php" class="btn btn-secondary">← Zurück zur Übersicht</a>
@@ -263,9 +263,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="form-actions">
                             <a href="index.php" class="btn btn-cancel">Abbrechen</a>
-                            <a href="delete.php?id=<?= $expense['id'] ?>" class="btn btn-delete"
-                                onclick="return confirm('Ausgabe wirklich löschen?')">🗑️ Löschen</a>
-                            <button type="submit" class="btn">💾 Änderungen speichern</button>
+                            <a href="delete.php?id=<?= $expense['id'] ?>" class="btn btn-delete"> <i class="fa-solid fa-trash-can"></i> Löschen</a>
+                            <button type="submit" class="btn"><i class="fa-solid fa-floppy-disk"></i> Änderungen speichern</button>
                         </div>
                     </form>
                 </div>

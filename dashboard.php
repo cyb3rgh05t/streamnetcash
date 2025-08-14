@@ -54,7 +54,7 @@ $total_wealth_with_investments = $wealth_data['total_wealth'];
 
 // Lade Top Investments für die Anzeige
 $all_investments = $db->getInvestmentsWithCurrentValue($user_id);
-$top_investments = array_slice($all_investments, 0, 3); // Top 3 nehmen
+$top_investments = array_slice($all_investments, 0, 5); // Top 3 nehmen
 
 // Success/Error Messages
 $message = '';
@@ -118,6 +118,299 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/dashboard.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <style>
+        .debt-overview-card {
+            background: var(--clr-surface-a10);
+            border: 1px solid var(--clr-surface-a20);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .debt-overview-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header-modern {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--clr-surface-a20);
+        }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--clr-primary-a0);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--clr-dark-a0);
+            font-size: 18px;
+        }
+
+        .header-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--clr-primary-a20);
+            margin: 0;
+        }
+
+        /* Verbesserte Statistik-Karten */
+        .debt-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .debt-stat-card {
+            background: var(--clr-surface-a20);
+            border: 1px solid var(--clr-surface-a30);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .debt-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            background: var(--clr-surface-a30);
+        }
+
+        .debt-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .debt-stat-card.positive::before {
+            background: #22c55e;
+        }
+
+        .debt-stat-card.negative::before {
+            background: #f97316;
+        }
+
+        .debt-stat-card.neutral::before {
+            background: var(--clr-primary-a0);
+        }
+
+        .stat-icon-modern {
+            width: 36px;
+            height: 36px;
+            margin: 0 auto 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .positive .stat-icon-modern {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .negative .stat-icon-modern {
+            background: rgba(249, 115, 22, 0.15);
+            color: #f97316;
+        }
+
+        .neutral .stat-icon-modern {
+            background: rgba(230, 163, 9, 0.15);
+            color: var(--clr-primary-a0);
+        }
+
+        .stat-value-modern {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            line-height: 1;
+        }
+
+        .stat-value-modern.positive {
+            color: #22c55e;
+        }
+
+        .stat-value-modern.negative {
+            color: #f97316;
+        }
+
+        .stat-value-modern.neutral {
+            color: var(--clr-primary-a20);
+        }
+
+        .stat-label-modern {
+            color: var(--clr-surface-a50);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Verbesserte Info-Box */
+        .info-box-modern {
+            background: var(--clr-surface-tonal-a10);
+            border: 1px solid var(--clr-surface-tonal-a20);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .info-content {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .info-icon-large {
+            width: 36px;
+            height: 36px;
+            background: var(--clr-primary-a0);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--clr-dark-a0);
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .info-text-content {
+            flex: 1;
+        }
+
+        .info-title-modern {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--clr-primary-a20);
+            margin-bottom: 6px;
+        }
+
+        .info-description {
+            color: var(--clr-surface-a50);
+            line-height: 1.5;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .info-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--clr-primary-a20);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .info-link:hover {
+            color: var(--clr-primary-a0);
+            gap: 8px;
+        }
+
+        /* Vermögensberechnung */
+        .wealth-calculation-card {
+            background: var(--clr-surface-a10);
+            border: 1px solid var(--clr-surface-a20);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .wealth-calculation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .wealth-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--clr-surface-a20);
+        }
+
+        .wealth-header .header-icon {
+            background: var(--clr-primary-a0);
+        }
+
+        .formula-container {
+            background: var(--clr-surface-a20);
+            border: 1px solid var(--clr-surface-a30);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .formula-title {
+            font-weight: 600;
+            color: var(--clr-primary-a20);
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .formula-content {
+            font-family: 'Courier New', monospace;
+            background: var(--clr-surface-a30);
+            padding: 16px;
+            border-radius: 6px;
+            border-left: 4px solid var(--clr-primary-a0);
+            line-height: 1.6;
+            color: var(--clr-light-a0);
+            font-size: 0.9rem;
+        }
+
+        .formula-result {
+            background: linear-gradient(135deg, var(--clr-primary-a0) 0%, var(--clr-primary-a10) 100%);
+            color: var(--clr-dark-a0);
+            padding: 12px 20px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 12px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .debt-stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .info-content {
+                flex-direction: column;
+                text-align: left;
+            }
+
+            .card-header-modern,
+            .wealth-header {
+                justify-content: flex-start;
+            }
+
+            .debt-overview-card,
+            .wealth-calculation-card {
+                padding: 16px;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -364,54 +657,115 @@ $due_recurring = $db->getDueRecurringTransactions($user_id, 3);
                 <?php endif; ?>
             </div>
 
-            <!-- NEUE Schulden-Info-Box (nur anzeigen wenn Schulden existieren) -->
+            <?php
+            // Ersetze den bestehenden Schulden-Übersicht und Vermögensberechnung Code in dashboard.php mit diesem:
+            ?>
+
+            <!-- Verbesserte Schulden-Übersicht (nur anzeigen wenn Schulden vorhanden) -->
             <?php if ($total_debt_in > 0 || $total_debt_out > 0): ?>
-                <div class="info-box">
-                    <div class="info-title">🤝 Schulden-Übersicht</div>
-                    <div class="info-text">
-                        <strong>Deine Schulden-Position:</strong><br>
-                        Erhaltenes Geld: <span class="debt-positive">+€<?= formatNumber($total_debt_in) ?></span><br>
-                        Verliehenes Geld: <span class="debt-negative">-€<?= formatNumber($total_debt_out) ?></span><br>
-                        <strong>Netto-Position: <span class="<?= $net_debt_position >= 0 ? 'debt-positive' : 'debt-negative' ?>">
+                <div class="debt-overview-card">
+                    <div class="card-header-modern">
+                        <div class="header-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <h3 class="header-title">Schulden-Übersicht</h3>
+                    </div>
+
+                    <div class="debt-stats-grid">
+                        <div class="debt-stat-card positive">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div class="stat-value-modern positive">+€<?= formatNumber($total_debt_in) ?></div>
+                            <div class="stat-label-modern">Erhaltenes Geld</div>
+                        </div>
+
+                        <div class="debt-stat-card negative">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="stat-value-modern negative">-€<?= formatNumber($total_debt_out) ?></div>
+                            <div class="stat-label-modern">Verliehenes Geld</div>
+                        </div>
+
+                        <div class="debt-stat-card <?= $net_debt_position >= 0 ? 'neutral' : 'negative' ?>">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <div class="stat-value-modern <?= $net_debt_position >= 0 ? 'neutral' : 'negative' ?>">
                                 <?= $net_debt_position >= 0 ? '+' : '' ?>€<?= formatNumber($net_debt_position) ?>
-                            </span></strong><br><br>
+                            </div>
+                            <div class="stat-label-modern">Netto-Position</div>
+                        </div>
+                    </div>
 
-                        <?php if ($net_debt_position > 0): ?>
-                            💡 Du hast mehr Geld erhalten als verliehen - das verbessert dein Gesamtvermögen!
-                        <?php elseif ($net_debt_position < 0): ?>
-                            💡 Du hast mehr Geld verliehen als erhalten - das reduziert dein verfügbares Vermögen.
-                        <?php else: ?>
-                            💡 Deine Schulden-Position ist ausgeglichen.
-                        <?php endif; ?>
-
-                        <br><br>
-                        <a href="modules/debts/index.php" style="color: var(--clr-primary-a20);">→ Alle Schulden verwalten</a>
+                    <div class="info-box-modern">
+                        <div class="info-content">
+                            <div class="info-icon-large">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="info-text-content">
+                                <div class="info-title-modern">
+                                    <?php if ($net_debt_position > 0): ?>
+                                        💡 Du hast mehr Geld erhalten als verliehen
+                                    <?php elseif ($net_debt_position < 0): ?>
+                                        💡 Du hast mehr Geld verliehen als erhalten
+                                    <?php else: ?>
+                                        💡 Deine Schulden-Position ist ausgeglichen
+                                    <?php endif; ?>
+                                </div>
+                                <div class="info-description">
+                                    <?php if ($net_debt_position > 0): ?>
+                                        Das verbessert dein Gesamtvermögen! Du hast eine positive Schulden-Bilanz.
+                                    <?php elseif ($net_debt_position < 0): ?>
+                                        Das reduziert dein verfügbares Vermögen. Verwalte deine Schulden, um den Überblick zu behalten.
+                                    <?php else: ?>
+                                        Deine Einnahmen und Ausgaben durch Schulden gleichen sich aus.
+                                    <?php endif; ?>
+                                </div>
+                                <a href="modules/debts/index.php" class="info-link">
+                                    <span>Alle Schulden verwalten</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             <?php endif; ?>
 
-            <!-- Allgemeine Info-Box -->
-            <div class="info-box">
-                <div class="info-title">📈 Vermögensberechnung</div>
-                <div class="info-text">
-                    <strong>Gesamtvermögen = Startkapital + Einnahmen - Ausgaben + Erhaltenes Geld - Verliehenes Geld + Investments</strong><br>
-                    €<?= formatNumber($starting_balance) ?> + €<?= formatNumber($total_income_all_time) ?> - €<?= formatNumber($total_expenses_all_time) ?>
-                    <?php if ($total_debt_in > 0): ?>+ €<?= formatNumber($total_debt_in) ?><?php endif; ?>
-                    <?php if ($total_debt_out > 0): ?> - €<?= formatNumber($total_debt_out) ?><?php endif; ?>
-                        <?php if ($total_investment_value > 0): ?> + €<?= formatNumber($total_investment_value) ?><?php endif; ?>
-                            = <strong>€<?= formatNumber($total_wealth_with_investments) ?></strong>
+            <!-- Verbesserte Vermögensberechnung -->
+            <div class="wealth-calculation-card">
+                <div class="wealth-header">
+                    <div class="header-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <h3 class="header-title">Wiederkehrende Transaktionen</h3>
+                </div>
 
-                            <?php if (!empty($due_recurring)): ?>
-                                <br><br>
-                                <strong>🔔 Fällige wiederkehrende Transaktionen:</strong><br>
+                <?php if (!empty($due_recurring)): ?>
+                    <div class="info-box-modern">
+                        <div class="info-content">
+
+                        </div>
+                        <div class="info-text-content">
+                            <div class="info-title-modern">🔔 Fällige wiederkehrende Transaktionen</div>
+                            <div class="info-description">
                                 <?php foreach ($due_recurring as $due): ?>
                                     • <?= htmlspecialchars($due['category_name']) ?>: €<?= number_format($due['amount'], 2, ',', '.') ?> (<?= date('d.m.Y', strtotime($due['next_due_date'])) ?>)<br>
                                 <?php endforeach; ?>
-                                <a href="modules/recurring/index.php" style="color: var(--clr-primary-a20);">→ Wiederkehrende Transaktionen verwalten</a>
-                            <?php endif; ?>
-                </div>
+                                Vergiss nicht, deine wiederkehrenden Transaktionen zu überprüfen.
+                            </div>
+                            <a href="modules/recurring/index.php" class="info-link">
+                                <span>Wiederkehrende Transaktionen verwalten</span>
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
             </div>
-        </main>
+        <?php endif; ?>
+    </div>
+    </div>
+    </main>
     </div>
 </body>
 

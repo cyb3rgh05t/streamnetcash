@@ -152,10 +152,10 @@ if (isset($_SESSION['success'])) {
                 <div class="alert alert-success"><?= htmlspecialchars($success_message) ?></div>
             <?php endif; ?>
 
-            <div class="tab-buttons">
+            <!-- <div class="tab-buttons">
                 <button class="tab-button active" onclick="switchTab('login')">Anmelden</button>
                 <button class="tab-button" onclick="switchTab('register')">Registrieren</button>
-            </div>
+            </div> -->
 
             <!-- Login Form -->
             <div id="login-form" class="form-container active">
@@ -202,7 +202,13 @@ if (isset($_SESSION['success'])) {
             </div>
 
             <div class="form-footer">
-                <p>© 2025 StreamNet Finance - Finanzverwaltung</p>
+                <?php
+                // Erweiterte Version - zeigt Startjahr bis aktuelles Jahr (falls unterschiedlich):
+                $start_year = 2024; // oder wann auch immer du angefangen hast
+                $current_year = date('Y');
+                ?>
+                <p>© <?= $start_year == $current_year ? $current_year : $start_year . ' - ' . $current_year ?> · Flammang Yves</p>
+
             </div>
         </div>
     </div>

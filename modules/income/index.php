@@ -205,7 +205,9 @@ if (isset($_SESSION['error'])) {
 
                     <?php foreach ($incomes as $income): ?>
                         <div class="income-row">
-                            <div style="font-size: 24px;"><?= htmlspecialchars($income['category_icon']) ?></div>
+                            <div class="category-icon" style="background-color: <?= htmlspecialchars($category['color']) ?>;">
+                                <?= $income['category_icon'] ?>
+                            </div>
 
                             <div class="income-description">
                                 <?= htmlspecialchars($income['note']) ?: 'Keine Beschreibung' ?>
@@ -213,7 +215,7 @@ if (isset($_SESSION['error'])) {
 
                             <div>
                                 <span class="category-badge" style="background-color: <?= htmlspecialchars($income['category_color']) ?>20; color: <?= htmlspecialchars($income['category_color']) ?>;">
-                                    <?= htmlspecialchars($income['category_icon']) ?> <?= htmlspecialchars($income['category_name']) ?>
+                                    <?= $income['category_icon'] ?> <?= htmlspecialchars($income['category_name']) ?>
                                 </span>
                             </div>
 

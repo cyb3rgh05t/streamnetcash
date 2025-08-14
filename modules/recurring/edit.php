@@ -288,7 +288,7 @@ $frequency_labels = [
                                     <optgroup label="<i class=" fa-solid fa-sack-dollar"></i> Einnahmen">
                                         <?php foreach ($income_categories as $category): ?>
                                             <option value="<?= $category['id'] ?>"
-                                                data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                                data-icon="<?= $category['icon'] ?>"
                                                 data-color="<?= htmlspecialchars($category['color']) ?>"
                                                 data-type="income"
                                                 <?= $recurring['category_id'] == $category['id'] ? 'selected' : '' ?>>
@@ -301,7 +301,7 @@ $frequency_labels = [
                                     <optgroup label="<i class=" fa-solid fa-money-bill-wave"></i> Ausgaben">
                                         <?php foreach ($expense_categories as $category): ?>
                                             <option value="<?= $category['id'] ?>"
-                                                data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                                data-icon="<?= $category['icon'] ?>"
                                                 data-color="<?= htmlspecialchars($category['color']) ?>"
                                                 data-type="expense"
                                                 <?= $recurring['category_id'] == $category['id'] ? 'selected' : '' ?>>

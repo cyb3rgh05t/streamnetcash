@@ -206,7 +206,9 @@ if (isset($_SESSION['error'])) {
 
                     <?php foreach ($expenses as $expense): ?>
                         <div class="expense-row">
-                            <div style="font-size: 24px;"><?= htmlspecialchars($expense['category_icon']) ?></div>
+                            <div class="category-icon" style="background-color: <?= htmlspecialchars($expense['category_color']) ?>;">
+                                <?= $expense['category_icon'] ?>
+                            </div>
 
                             <div class="expense-description">
                                 <?= htmlspecialchars($expense['note']) ?: 'Keine Beschreibung' ?>
@@ -214,7 +216,7 @@ if (isset($_SESSION['error'])) {
 
                             <div>
                                 <span class="category-badge" style="background-color: <?= htmlspecialchars($expense['category_color']) ?>20; color: <?= htmlspecialchars($expense['category_color']) ?>;">
-                                    <?= htmlspecialchars($expense['category_icon']) ?> <?= htmlspecialchars($expense['category_name']) ?>
+                                    <?= $expense['category_icon'] ?> <?= htmlspecialchars($expense['category_name']) ?>
                                 </span>
                             </div>
 

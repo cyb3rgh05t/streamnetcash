@@ -207,7 +207,7 @@ $form_data = [
                                             <optgroup label="<i class=" fa-solid fa-sack-dollar"></i> Einnahmen">
                                                 <?php foreach ($income_categories as $category): ?>
                                                     <option value="<?= $category['id'] ?>"
-                                                        data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                                        data-icon="<?= $category['icon'] ?>"
                                                         data-color="<?= htmlspecialchars($category['color']) ?>"
                                                         data-type="income"
                                                         <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>
@@ -220,7 +220,7 @@ $form_data = [
                                             <optgroup label="<i class=" fa-solid fa-money-bill-wave"></i> Ausgaben">
                                                 <?php foreach ($expense_categories as $category): ?>
                                                     <option value="<?= $category['id'] ?>"
-                                                        data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                                        data-icon="<?= $category['icon'] ?>"
                                                         data-color="<?= htmlspecialchars($category['color']) ?>"
                                                         data-type="expense"
                                                         <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>

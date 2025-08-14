@@ -194,7 +194,7 @@ if (isset($_SESSION['error'])) {
                                     <div class="transaction-info">
                                         <div class="transaction-category">
                                             <span class="category-icon" style="background-color: <?= htmlspecialchars($debt['category_color']) ?>;">
-                                                <?= htmlspecialchars($debt['category_icon']) ?>
+                                                <?= $debt['category_icon'] ?>
                                             </span>
                                             <?= htmlspecialchars($debt['category_name']) ?>
                                         </div>
@@ -239,7 +239,7 @@ if (isset($_SESSION['error'])) {
                                     <div class="transaction-info">
                                         <div class="transaction-category">
                                             <span class="category-icon" style="background-color: <?= htmlspecialchars($debt['category_color']) ?>;">
-                                                <?= htmlspecialchars($debt['category_icon']) ?>
+                                                <?= $debt['category_icon'] ?>
                                             </span>
                                             <?= htmlspecialchars($debt['category_name']) ?>
                                         </div>

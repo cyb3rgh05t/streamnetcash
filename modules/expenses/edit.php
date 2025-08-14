@@ -187,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="current-info-item">
                                 <strong>Kategorie:</strong><br>
                                 <span class="current-info-value">
-                                    <?= htmlspecialchars($expense['category_icon']) ?> <?= htmlspecialchars($expense['category_name']) ?>
+                                    <?= $expense['category_icon'] ?> <?= htmlspecialchars($expense['category_name']) ?>
                                 </span>
                             </div>
                             <div class="current-info-item">
@@ -219,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <option value="">Kategorie wählen...</option>
                                 <?php foreach ($categories as $category): ?>
                                     <option value="<?= $category['id'] ?>"
-                                        data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                        data-icon="<?= $category['icon'] ?>"
                                         data-color="<?= htmlspecialchars($category['color']) ?>"
                                         <?= $expense['category_id'] == $category['id'] ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($category['name']) ?>

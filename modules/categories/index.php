@@ -159,7 +159,7 @@ if (isset($_SESSION['error'])) {
                             <?php foreach ($income_categories as $category): ?>
                                 <div class="category-card">
                                     <div class="category-icon" style="background-color: <?= htmlspecialchars($category['color']) ?>;">
-                                        <?= htmlspecialchars($category['icon']) ?>
+                                        <?= $category['icon'] ?>
                                     </div>
 
                                     <div class="category-info">
@@ -219,7 +219,7 @@ if (isset($_SESSION['error'])) {
                             <?php foreach ($expense_categories as $category): ?>
                                 <div class="category-card">
                                     <div class="category-icon" style="background-color: <?= htmlspecialchars($category['color']) ?>;">
-                                        <?= htmlspecialchars($category['icon']) ?>
+                                        <?= $category['icon'] ?>
                                     </div>
 
                                     <div class="category-info">
@@ -280,7 +280,7 @@ if (isset($_SESSION['error'])) {
                             <?php foreach ($debt_in_categories as $category): ?>
                                 <div class="category-card">
                                     <div class="category-icon" style="background-color: <?= htmlspecialchars($category['color']) ?>;">
-                                        <?= htmlspecialchars($category['icon']) ?>
+                                        <?= $category['icon'] ?>
                                     </div>
 
                                     <div class="category-info">
@@ -341,7 +341,7 @@ if (isset($_SESSION['error'])) {
                             <?php foreach ($debt_out_categories as $category): ?>
                                 <div class="category-card">
                                     <div class="category-icon" style="background-color: <?= htmlspecialchars($category['color']) ?>;">
-                                        <?= htmlspecialchars($category['icon']) ?>
+                                        <?= $category['icon'] ?>
                                     </div>
 
                                     <div class="category-info">

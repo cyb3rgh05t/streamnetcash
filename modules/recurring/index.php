@@ -228,14 +228,17 @@ $frequency_labels = [
                         $is_due_soon = $next_due <= date('Y-m-d', strtotime('+3 days'));
                         ?>
                         <div class="recurring-row <?= !$recurring['is_active'] ? 'inactive' : '' ?>">
-                            <div style="font-size: 24px;"><?= htmlspecialchars($recurring['category_icon']) ?></div>
+                            <div class="category-icon" style="background-color: <?= htmlspecialchars($recurring['category_color']) ?>;">
+                                <?= $recurring['category_icon'] ?>
+                            </div>
+
 
                             <div>
                                 <div style="font-weight: 500; color: var(--clr-light-a0); margin-bottom: 4px;">
                                     <?= htmlspecialchars($recurring['note']) ?: 'Keine Beschreibung' ?>
                                 </div>
                                 <span class="category-badge" style="background-color: <?= htmlspecialchars($recurring['category_color']) ?>20; color: <?= htmlspecialchars($recurring['category_color']) ?>;">
-                                    <?= htmlspecialchars($recurring['category_icon']) ?> <?= htmlspecialchars($recurring['category_name']) ?>
+                                    <?= $recurring['category_icon'] ?> <?= htmlspecialchars($recurring['category_name']) ?>
                                 </span>
                             </div>
 

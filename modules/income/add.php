@@ -178,7 +178,7 @@ $form_data = [
                                     <option value="">Kategorie wählen...</option>
                                     <?php foreach ($categories as $category): ?>
                                         <option value="<?= $category['id'] ?>"
-                                            data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                            data-icon="<?= $category['icon'] ?>"
                                             data-color="<?= htmlspecialchars($category['color']) ?>"
                                             <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($category['name']) ?>

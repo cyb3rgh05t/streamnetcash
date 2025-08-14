@@ -191,7 +191,7 @@ $page_icon = $debt_type === 'debt_out' ? 'fa-solid fa-arrow-right' : 'fa-solid f
                                     <option value="">Kategorie wählen...</option>
                                     <?php foreach ($categories as $category): ?>
                                         <option value="<?= $category['id'] ?>"
-                                            data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                            data-icon="<?= $category['icon'] ?>"
                                             data-color="<?= htmlspecialchars($category['color']) ?>"
                                             <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($category['name']) ?>

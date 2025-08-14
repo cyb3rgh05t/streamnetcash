@@ -204,11 +204,11 @@ $form_data = [
                                     <select id="category_id" name="category_id" class="form-select" required onchange="updatePreview()">
                                         <option value="">Kategorie wählen...</option>
                                         <?php if (!empty($income_categories)): ?>
-                                            <optgroup label="<i class=" fa-solid fa-sack-dollar"></i> Einnahmen">
+                                            <optgroup label="💰 Einnahmen 💰">
                                                 <?php foreach ($income_categories as $category): ?>
                                                     <option value="<?= $category['id'] ?>"
-                                                        data-icon="<?= $category['icon'] ?>"
-                                                        data-color="<?= htmlspecialchars($category['color']) ?>"
+                                                        data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                                        data-color="<?= $category['color'] ?>"
                                                         data-type="income"
                                                         <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>
                                                         <?= htmlspecialchars($category['name']) ?>
@@ -217,11 +217,11 @@ $form_data = [
                                             </optgroup>
                                         <?php endif; ?>
                                         <?php if (!empty($expense_categories)): ?>
-                                            <optgroup label="<i class=" fa-solid fa-money-bill-wave"></i> Ausgaben">
+                                            <optgroup label="💸 Ausgaben 💸">
                                                 <?php foreach ($expense_categories as $category): ?>
                                                     <option value="<?= $category['id'] ?>"
-                                                        data-icon="<?= $category['icon'] ?>"
-                                                        data-color="<?= htmlspecialchars($category['color']) ?>"
+                                                        data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                                        data-color="<?= $category['color'] ?>"
                                                         data-type="expense"
                                                         <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>
                                                         <?= htmlspecialchars($category['name']) ?>
@@ -391,6 +391,14 @@ $form_data = [
             const endDate = document.getElementById('end_date').value;
             const frequency = document.querySelector('input[name="frequency"]:checked')?.value || 'monthly';
 
+            // Hex zu RGBA mit Transparenz konvertieren
+            function hexToRgba(hex, alpha = 0.1) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+
             // Kategorie Preview
             if (categorySelect.value) {
                 const option = categorySelect.options[categorySelect.selectedIndex];
@@ -399,9 +407,10 @@ $form_data = [
                 const categoryName = option.text;
                 const categoryType = option.getAttribute('data-type');
 
-                document.getElementById('previewIcon').textContent = categoryIcon;
+                document.getElementById('previewIcon').innerHTML = categoryIcon;
                 document.getElementById('previewName').textContent = categoryName;
                 document.getElementById('categoryPreview').style.borderLeft = `4px solid ${categoryColor}`;
+                document.getElementById('categoryPreview').style.background = hexToRgba(categoryColor, 0.1); // ← Transparenz hinzugefügt
                 document.getElementById('categoryPreview').classList.add('visible');
 
                 document.getElementById('previewCategory').textContent = `${categoryIcon} ${categoryName}`;
@@ -409,6 +418,7 @@ $form_data = [
                 document.getElementById('previewAmount').style.color = categoryType === 'income' ? '#4ade80' : '#f87171';
             } else {
                 document.getElementById('categoryPreview').classList.remove('visible');
+                document.getElementById('categoryPreview').style.background = 'transparent'; // ← Background zurücksetzen
                 document.getElementById('previewCategory').textContent = 'Keine ausgewählt';
                 document.getElementById('previewAmount').textContent = `€${parseFloat(amount).toFixed(2).replace('.', ',')}`;
                 document.getElementById('previewAmount').style.color = 'var(--clr-light-a0)';

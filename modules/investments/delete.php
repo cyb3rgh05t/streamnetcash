@@ -74,8 +74,15 @@ $profit_loss = $current_value - $purchase_value;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investment löschen - StreamNet Finance</title>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+        integrity="sha512-..."
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/investments.css">
+    <link rel="stylesheet" href="../../assets/css/sidebar.css">
 </head>
 
 <body>
@@ -90,16 +97,22 @@ $profit_loss = $current_value - $purchase_value;
 
             <nav>
                 <ul class="sidebar-nav">
-                    <li><a href="../../dashboard.php">📊 Dashboard</a></li>
-                    <li><a href="../expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i> Ausgaben</a></li>
-                    <li><a href="../income/index.php"><i class="fa-solid fa-sack-dollar"></i> Einnahmen</a></li>
-                    <li><a href="../recurring/index.php">🔄 Wiederkehrend</a></li>
-                    <li><a href="index.php" class="active">📈 Investments</a></li>
-                    <li><a href="../categories/index.php">🏷️ Kategorien</a></li>
-                    <li style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;">
-                        <a href="../../settings.php">⚙️ Einstellungen</a>
+                    <li><a href="../../dashboard.php"><i class="fa-solid fa-house"></i>&nbsp;&nbsp;Dashboard</a></li>
+                    <li><a href="../expenses/index.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp;Ausgaben</a></li>
+                    <li><a href="../income/index.php"><i class="fa-solid fa-sack-dollar"></i>&nbsp;&nbsp;Einnahmen</a></li>
+                    <li><a href="../debts/index.php" class="<?= strpos($_SERVER['PHP_SELF'], 'debts') ? 'active' : '' ?>">
+                            <i class="fa-solid fa-handshake"></i>&nbsp;&nbsp;Schulden
+                        </a></li>
+                    <li><a href="../recurring/index.php"><i class="fas fa-sync"></i>&nbsp;&nbsp;Wiederkehrend</a></li>
+                    <li><a href="index.php" class="active"><i class="fa-brands fa-btc"></i>&nbsp;&nbsp;Crypto</a></li>
+                    <li><a href="../categories/index.php"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp;Kategorien</a></li>
+                    <li>
+                        <a style="margin-top: 20px; border-top: 1px solid var(--clr-surface-a20); padding-top: 20px;" href="../../settings.php">
+                            <i class="fa-solid fa-gear"></i>&nbsp;&nbsp;Einstellungen
+                        </a>
+                    <li>
+                        <a href="../../logout.php"><i class="fa-solid fa-right-from-bracket"></i>&nbsp;&nbsp;Logout</a>
                     </li>
-                    <li><a href="../../logout.php">🚪 Logout</a></li>
                 </ul>
             </nav>
         </aside>

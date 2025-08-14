@@ -227,7 +227,7 @@ $frequency_labels = [
                         <h4>📋 Aktuelle wiederkehrende Transaktion</h4>
                         <div class="current-recurring">
                             <div class="current-icon" style="background-color: <?= htmlspecialchars($recurring['category_color']) ?>;">
-                                <?= htmlspecialchars($recurring['category_icon']) ?>
+                                <?= $recurring['category_icon'] ?>
                             </div>
                             <div class="current-details">
                                 <h5><?= htmlspecialchars($recurring['note']) ?></h5>
@@ -244,7 +244,7 @@ $frequency_labels = [
                             <div class="info-item">
                                 <strong>Kategorie:</strong><br>
                                 <span class="info-value">
-                                    <?= htmlspecialchars($recurring['category_icon']) ?> <?= htmlspecialchars($recurring['category_name']) ?>
+                                    <?= $recurring['category_icon'] ?> <?= htmlspecialchars($recurring['category_name']) ?>
                                 </span>
                             </div>
                             <div class="info-item">
@@ -288,8 +288,8 @@ $frequency_labels = [
                                     <optgroup label="<i class=" fa-solid fa-sack-dollar"></i> Einnahmen">
                                         <?php foreach ($income_categories as $category): ?>
                                             <option value="<?= $category['id'] ?>"
-                                                data-icon="<?= $category['icon'] ?>"
-                                                data-color="<?= htmlspecialchars($category['color']) ?>"
+                                                data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                                data-color="<?= $category['color'] ?>"
                                                 data-type="income"
                                                 <?= $recurring['category_id'] == $category['id'] ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($category['name']) ?>
@@ -301,8 +301,8 @@ $frequency_labels = [
                                     <optgroup label="<i class=" fa-solid fa-money-bill-wave"></i> Ausgaben">
                                         <?php foreach ($expense_categories as $category): ?>
                                             <option value="<?= $category['id'] ?>"
-                                                data-icon="<?= $category['icon'] ?>"
-                                                data-color="<?= htmlspecialchars($category['color']) ?>"
+                                                data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                                data-color="<?= $category['color'] ?>"
                                                 data-type="expense"
                                                 <?= $recurring['category_id'] == $category['id'] ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($category['name']) ?>
@@ -425,9 +425,18 @@ $frequency_labels = [
                 const categoryColor = option.getAttribute('data-color');
                 const categoryName = option.text;
 
-                icon.textContent = categoryIcon;
+                // Hex zu RGBA mit Transparenz konvertieren
+                function hexToRgba(hex, alpha = 0.1) {
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                }
+
+                icon.innerHTML = categoryIcon; // ← innerHTML!
                 name.textContent = categoryName;
                 preview.style.borderLeft = `4px solid ${categoryColor}`;
+                preview.style.background = hexToRgba(categoryColor, 0.1); // ← Transparenz!
                 preview.classList.add('visible');
             } else {
                 preview.classList.remove('visible');

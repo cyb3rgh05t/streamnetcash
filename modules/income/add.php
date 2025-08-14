@@ -178,8 +178,8 @@ $form_data = [
                                     <option value="">Kategorie wählen...</option>
                                     <?php foreach ($categories as $category): ?>
                                         <option value="<?= $category['id'] ?>"
-                                            data-icon="<?= $category['icon'] ?>"
-                                            data-color="<?= htmlspecialchars($category['color']) ?>"
+                                            data-icon="<?= htmlspecialchars($category['icon']) ?>"
+                                            data-color="<?= $category['color'] ?>"
                                             <?= $form_data['category_id'] == $category['id'] ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($category['name']) ?>
                                         </option>
@@ -266,9 +266,18 @@ $form_data = [
                 const categoryColor = option.getAttribute('data-color');
                 const categoryName = option.text;
 
-                icon.textContent = categoryIcon;
+                // Hex zu RGBA mit Transparenz konvertieren
+                function hexToRgba(hex, alpha = 0.1) {
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                }
+
+                icon.innerHTML = categoryIcon;
                 name.textContent = categoryName;
                 preview.style.borderLeft = `4px solid ${categoryColor}`;
+                preview.style.background = hexToRgba(categoryColor, 0.1); // 10% Transparenz
                 preview.classList.add('visible');
             } else {
                 preview.classList.remove('visible');

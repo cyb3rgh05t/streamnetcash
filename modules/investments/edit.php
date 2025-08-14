@@ -250,7 +250,7 @@ $form_data = [
                         </div>
                     </form>
 
-                    <div class="investment-info">
+                    <div class="tips">
                         <div class="info-title">💡 Investment-Info</div>
                         <div class="info-content">
                             <p><strong>Erstellt:</strong> <?= date('d.m.Y H:i', strtotime($investment['created_at'])) ?></p>
